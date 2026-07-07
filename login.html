@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AccidentGuard — Secure Login | Accident Prone Zone Alert System</title>
+  <meta name="description" content="Login to AccidentGuard — your real-time accident-prone zone alert system that keeps you safe on every road." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="login.css" />
+</head>
+<body>
+
+  <!-- Toast Container -->
+  <div id="toast-container" aria-live="polite"></div>
+
+  <div class="page-wrapper">
+    <div class="main-card">
+
+      <!-- ══════════════════════════════════════
+           LEFT PANEL — Project Description
+      ══════════════════════════════════════ -->
+      <aside class="left-panel" aria-label="Project information">
+
+        <!-- Brand -->
+        <div class="brand-header">
+          <div class="brand-icon-wrap" aria-hidden="true">
+            <!-- Shield + Road icon -->
+            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <path d="M12 2L3 6v6c0 5.25 3.75 10.15 9 11.35C17.25 22.15 21 17.25 21 12V6L12 2z"/>
+            </svg>
+          </div>
+          <div class="brand-text">
+            <div class="brand-name">AccidentGuard</div>
+            <div class="brand-tagline">Accident Prone Zone Alert System</div>
+          </div>
+        </div>
+
+        <!-- Hero Illustration -->
+        <div class="hero-illustration" role="img" aria-label="Road safety illustration">
+          <img src="accident_zone_illustration.png"
+               alt="Accident-prone zone map with safety alerts and road warnings" />
+          <div class="hero-overlay" aria-hidden="true"></div>
+        </div>
+
+        <!-- Description Text -->
+        <div class="left-description">
+          <h2>Stay Safe.<br /><span>Know Every Danger Ahead.</span></h2>
+          <p>
+            AccidentGuard maps real-time <strong>accident-prone hotspots</strong> near your GPS location and
+            issues instant <strong>visual &amp; voice alerts</strong> before you enter a high-risk zone.
+            Whether you're a commuter, a truck driver, or an emergency responder — we keep you one step ahead
+            of danger, every mile of the way.
+          </p>
+
+          <!-- Feature Badges -->
+          <div class="feature-list" role="list">
+            <span class="feature-badge" role="listitem">
+              <!-- Map pin icon -->
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+              Nearby Hotspot Alerts
+            </span>
+            <span class="feature-badge" role="listitem">
+              <!-- Bell icon -->
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
+              Real-Time Notifications
+            </span>
+            <span class="feature-badge" role="listitem">
+              <!-- Shield icon -->
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+              Route Safety Score
+            </span>
+            <span class="feature-badge" role="listitem">
+              <!-- Activity icon -->
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+              Live Incident Tracking
+            </span>
+            <span class="feature-badge" role="listitem">
+              <!-- Ambulance / cross icon -->
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+              Emergency SOS
+            </span>
+            <span class="feature-badge" role="listitem">
+              <!-- Navigation icon -->
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polygon points="3 11 22 2 13 21 11 13 3 11"/></svg>
+              Smart Navigation
+            </span>
+          </div>
+
+          <!-- Stats -->
+          <div class="stats-row" role="list">
+            <div class="stat-box" role="listitem">
+              <span class="stat-value" data-count="1200" data-suffix="+">0</span>
+              <span class="stat-label">Hotspots Mapped</span>
+            </div>
+            <div class="stat-box" role="listitem">
+              <span class="stat-value" data-count="98" data-suffix="%">0%</span>
+              <span class="stat-label">Alert Accuracy</span>
+            </div>
+            <div class="stat-box" role="listitem">
+              <span class="stat-value" data-count="45000" data-suffix="+">0</span>
+              <span class="stat-label">Users Protected</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Clipart Ribbon -->
+        <div class="clipart-ribbon" aria-hidden="true">
+          <!-- Warning Triangle -->
+          <div class="clipart-icon" title="Hazard Warning">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#e85d04" stroke-width="2.2">
+              <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+              <line x1="12" y1="9" x2="12" y2="13"/>
+              <line x1="12" y1="17" x2="12.01" y2="17"/>
+            </svg>
+          </div>
+          <!-- Ambulance cross -->
+          <div class="clipart-icon" title="Emergency Services">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#e63946" stroke-width="2.2">
+              <rect x="1" y="7" width="22" height="13" rx="2" ry="2"/>
+              <path d="M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2"/>
+              <line x1="12" y1="11" x2="12" y2="16"/>
+              <line x1="9.5" y1="13.5" x2="14.5" y2="13.5"/>
+            </svg>
+          </div>
+          <!-- Location pin -->
+          <div class="clipart-icon" title="GPS Location">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#0077b6" stroke-width="2.2">
+              <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/>
+              <circle cx="12" cy="10" r="3"/>
+            </svg>
+          </div>
+          <!-- Speed / gauge -->
+          <div class="clipart-icon" title="Speed Alert">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#fb8500" stroke-width="2.2">
+              <path d="M12 2a10 10 0 00-7.07 17.07"/>
+              <path d="M12 2a10 10 0 017.07 17.07"/>
+              <line x1="12" y1="12" x2="16.24" y2="7.76"/>
+            </svg>
+          </div>
+          <!-- Phone alert -->
+          <div class="clipart-icon" title="Mobile Notification">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#2dc653" stroke-width="2.2">
+              <rect x="5" y="2" width="14" height="20" rx="2" ry="2"/>
+              <line x1="12" y1="18" x2="12.01" y2="18"/>
+            </svg>
+          </div>
+        </div>
+
+      </aside>
+
+      <!-- ══════════════════════════════════════
+           RIGHT PANEL — Login / Register
+      ══════════════════════════════════════ -->
+      <main class="right-panel" aria-label="Authentication panel">
+
+        <div class="right-panel-header">
+          <h1>Welcome Back 👋</h1>
+          <p>Sign in to your AccidentGuard account to continue</p>
+        </div>
+
+        <!-- ── Login Panel (tab + forms) ── -->
+        <div id="login-panel">
+
+          <!-- Tab Bar -->
+          <div class="tab-bar" role="tablist" aria-label="Login type">
+            <button
+              id="tab-btn-user"
+              class="tab-btn active"
+              role="tab"
+              aria-selected="true"
+              aria-controls="user-login-section"
+              data-tab="user"
+            >
+              <!-- User icon -->
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/>
+                <circle cx="12" cy="7" r="4"/>
+              </svg>
+              User Login
+            </button>
+            <button
+              id="tab-btn-admin"
+              class="tab-btn"
+              role="tab"
+              aria-selected="false"
+              aria-controls="admin-login-section"
+              data-tab="admin"
+            >
+              <!-- Shield icon -->
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+              </svg>
+              Admin Login
+            </button>
+          </div>
+
+          <!-- ── USER LOGIN FORM ── -->
+          <div id="user-login-section" class="login-form-section form-section active" role="tabpanel" aria-labelledby="tab-btn-user">
+            <form id="user-login-form" novalidate autocomplete="off">
+
+              <!-- Mobile Number -->
+              <div class="form-group">
+                <label class="form-label" for="user-mobile">
+                  Mobile Number <span class="required">*</span>
+                </label>
+                <div class="input-wrap">
+                  <span class="input-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>
+                  </span>
+                  <input
+                    type="tel"
+                    id="user-mobile"
+                    class="form-input"
+                    placeholder="Enter 10-digit mobile number (e.g. 9876543210)"
+                    maxlength="10"
+                    inputmode="numeric"
+                    autocomplete="tel"
+                    required
+                    aria-describedby="val-user-mobile"
+                  />
+                </div>
+                <div class="validation-msg" id="val-user-mobile" role="alert"></div>
+              </div>
+
+              <!-- Password -->
+              <div class="form-group">
+                <label class="form-label" for="user-password">
+                  Password <span class="required">*</span>
+                </label>
+                <div class="input-wrap">
+                  <span class="input-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+                  </span>
+                  <input
+                    type="password"
+                    id="user-password"
+                    class="form-input"
+                    placeholder="Min 6 chars: A-Z, a-z, 0-9, special (e.g. User@1)"
+                    autocomplete="current-password"
+                    required
+                    aria-describedby="val-user-password"
+                  />
+                  <button type="button" class="toggle-pw" id="toggle-user-pw" aria-label="Show password">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                  </button>
+                </div>
+                <div class="validation-msg" id="val-user-password" role="alert"></div>
+              </div>
+
+              <!-- Login Button -->
+              <button type="submit" class="btn-primary" id="user-login-btn" aria-label="Sign in as user">
+                <span class="btn-label">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h4a2 2 0 012 2v14a2 2 0 01-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
+                  Sign In
+                </span>
+                <div class="spinner" aria-label="Signing in…"></div>
+              </button>
+
+            </form>
+
+            <div class="divider"><span>New to AccidentGuard?</span></div>
+            <p class="switch-link">
+              Don't have an account?
+              <a href="#" id="show-register-link">Create Account →</a>
+            </p>
+          </div><!-- /#user-login-section -->
+
+          <!-- ── ADMIN LOGIN FORM ── -->
+          <div id="admin-login-section" class="login-form-section form-section" role="tabpanel" aria-labelledby="tab-btn-admin">
+            <form id="admin-login-form" novalidate autocomplete="off">
+
+              <!-- Admin Access Key Notice -->
+              <div class="admin-key-group">
+                <div class="admin-key-label">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 11-7.778 7.778 5.5 5.5 0 017.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>
+                  Admin Access Required
+                </div>
+                <div class="form-group" style="margin-bottom:0">
+                  <div class="input-wrap">
+                    <span class="input-icon" aria-hidden="true">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 11-7.778 7.778 5.5 5.5 0 017.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>
+                    </span>
+                    <input
+                      type="text"
+                      id="admin-key"
+                      class="form-input"
+                      placeholder="Enter admin access key (e.g. APZ-ADMIN-2024)"
+                      autocomplete="off"
+                      aria-describedby="val-admin-key"
+                    />
+                  </div>
+                  <div class="validation-msg" id="val-admin-key" role="alert"></div>
+                </div>
+              </div>
+
+              <!-- Admin Mobile -->
+              <div class="form-group">
+                <label class="form-label" for="admin-mobile">
+                  Admin Mobile Number <span class="required">*</span>
+                </label>
+                <div class="input-wrap">
+                  <span class="input-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>
+                  </span>
+                  <input
+                    type="tel"
+                    id="admin-mobile"
+                    class="form-input"
+                    placeholder="Enter 10-digit admin mobile (e.g. 9000000000)"
+                    maxlength="10"
+                    inputmode="numeric"
+                    autocomplete="tel"
+                    required
+                    aria-describedby="val-admin-mobile"
+                  />
+                </div>
+                <div class="validation-msg" id="val-admin-mobile" role="alert"></div>
+              </div>
+
+              <!-- Admin Password -->
+              <div class="form-group">
+                <label class="form-label" for="admin-password">
+                  Password <span class="required">*</span>
+                </label>
+                <div class="input-wrap">
+                  <span class="input-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+                  </span>
+                  <input
+                    type="password"
+                    id="admin-password"
+                    class="form-input"
+                    placeholder="Admin password (e.g. Admin@123)"
+                    autocomplete="current-password"
+                    required
+                    aria-describedby="val-admin-password"
+                  />
+                  <button type="button" class="toggle-pw" id="toggle-admin-pw" aria-label="Show password">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                  </button>
+                </div>
+                <div class="validation-msg" id="val-admin-password" role="alert"></div>
+              </div>
+
+              <!-- Admin Login Button -->
+              <button type="submit" class="btn-primary" id="admin-login-btn" aria-label="Sign in as administrator">
+                <span class="btn-label">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                  Admin Sign In
+                </span>
+                <div class="spinner" aria-label="Authenticating…"></div>
+              </button>
+
+            </form>
+
+            <div class="divider"><span>Not an administrator?</span></div>
+            <p class="switch-link">
+              Regular user?
+              <a href="#" id="switch-to-user-link" data-tab="user">Switch to User Login →</a>
+            </p>
+          </div><!-- /#admin-login-section -->
+
+        </div><!-- /#login-panel -->
+
+        <!-- ── REGISTER PANEL ── -->
+        <div id="register-panel" style="display:none">
+
+          <div class="right-panel-header" style="margin-bottom:18px">
+            <h1 style="font-size:1.35rem">Create Account 🚀</h1>
+            <p>Join AccidentGuard and stay protected on every route</p>
+          </div>
+
+          <form id="register-form" novalidate autocomplete="off">
+
+            <!-- Full Name -->
+            <div class="form-group">
+              <label class="form-label" for="reg-name">
+                Full Name <span class="required">*</span>
+              </label>
+              <div class="input-wrap">
+                <span class="input-icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                </span>
+                <input
+                  type="text"
+                  id="reg-name"
+                  class="form-input"
+                  placeholder="Enter your full name (e.g. Rahul Sharma)"
+                  autocomplete="name"
+                  required
+                  aria-describedby="val-reg-name"
+                />
+              </div>
+              <div class="validation-msg" id="val-reg-name" role="alert"></div>
+            </div>
+
+            <!-- Mobile Number -->
+            <div class="form-group">
+              <label class="form-label" for="reg-mobile">
+                Mobile Number <span class="required">*</span>
+              </label>
+              <div class="input-wrap">
+                <span class="input-icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>
+                </span>
+                <input
+                  type="tel"
+                  id="reg-mobile"
+                  class="form-input"
+                  placeholder="10-digit mobile number (e.g. 9876543210)"
+                  maxlength="10"
+                  inputmode="numeric"
+                  autocomplete="tel"
+                  required
+                  aria-describedby="val-reg-mobile"
+                />
+              </div>
+              <div class="validation-msg" id="val-reg-mobile" role="alert"></div>
+            </div>
+
+            <!-- Email -->
+            <div class="form-group">
+              <label class="form-label" for="reg-email">
+                Email Address <span class="required">*</span>
+              </label>
+              <div class="input-wrap">
+                <span class="input-icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+                </span>
+                <input
+                  type="email"
+                  id="reg-email"
+                  class="form-input"
+                  placeholder="Your email address (e.g. rahul@example.com)"
+                  autocomplete="email"
+                  required
+                  aria-describedby="val-reg-email"
+                />
+              </div>
+              <div class="validation-msg" id="val-reg-email" role="alert"></div>
+            </div>
+
+            <!-- Choose Password -->
+            <div class="form-group">
+              <label class="form-label" for="reg-password">
+                Choose Password <span class="required">*</span>
+              </label>
+              <div class="input-wrap">
+                <span class="input-icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+                </span>
+                <input
+                  type="password"
+                  id="reg-password"
+                  class="form-input"
+                  placeholder="Min 6 chars: A-Z, a-z, 0-9, special (e.g. Abc@12)"
+                  autocomplete="new-password"
+                  required
+                  aria-describedby="val-reg-password reg-strength"
+                />
+                <button type="button" class="toggle-pw" id="toggle-reg-pw" aria-label="Show password">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                </button>
+              </div>
+              <!-- Strength Meter -->
+              <div class="pw-strength-wrap" id="reg-strength" aria-live="polite">
+                <div class="pw-strength-bar"><div class="pw-strength-fill"></div></div>
+                <div class="pw-strength-text">Strength: —</div>
+              </div>
+              <div class="validation-msg" id="val-reg-password" role="alert"></div>
+            </div>
+
+            <!-- Confirm Password -->
+            <div class="form-group">
+              <label class="form-label" for="reg-confirm">
+                Confirm Password <span class="required">*</span>
+              </label>
+              <div class="input-wrap">
+                <span class="input-icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+                </span>
+                <input
+                  type="password"
+                  id="reg-confirm"
+                  class="form-input"
+                  placeholder="Re-enter your password to confirm"
+                  autocomplete="new-password"
+                  required
+                  aria-describedby="val-reg-confirm"
+                />
+                <button type="button" class="toggle-pw" id="toggle-reg-confirm" aria-label="Show confirm password">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                </button>
+              </div>
+              <div class="validation-msg" id="val-reg-confirm" role="alert"></div>
+            </div>
+
+            <!-- Terms -->
+            <div class="checkbox-wrap">
+              <input type="checkbox" id="reg-terms" />
+              <label for="reg-terms">
+                I agree to the <a href="#" tabindex="0">Terms &amp; Conditions</a> and
+                <a href="#" tabindex="0">Privacy Policy</a> of AccidentGuard
+              </label>
+            </div>
+
+            <!-- Create Account Button -->
+            <button type="submit" class="btn-primary" id="reg-btn" aria-label="Create new account">
+              <span class="btn-label">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>
+                Create Account
+              </span>
+              <div class="spinner" aria-label="Creating account…"></div>
+            </button>
+
+          </form>
+
+          <div class="divider"><span>Already have an account?</span></div>
+          <p class="switch-link">
+            <a href="#" id="show-login-link">← Back to Login</a>
+          </p>
+        </div><!-- /#register-panel -->
+
+      </main><!-- .right-panel -->
+
+    </div><!-- .main-card -->
+  </div><!-- .page-wrapper -->
+
+  <script src="login.js"></script>
+</body>
+</html>

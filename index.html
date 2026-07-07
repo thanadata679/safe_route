@@ -1,0 +1,2636 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SafeRoute — Accident-Prone Zone Alert System | Dashboard</title>
+  <meta name="description"
+    content="SafeRoute dashboard — view accident-prone zones, plan safe routes, and receive real-time alerts to stay protected on every road." />
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Poppins:wght@400;500;600;700;800&display=swap"
+    rel="stylesheet" />
+
+  <!-- Leaflet CSS (free, no API key needed) -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
+  <style>
+    /* =============================================
+       CSS CUSTOM PROPERTIES
+    ============================================= */
+    :root {
+      --primary: #e85d04;
+      --primary-light: #fb8500;
+      --primary-dark: #c44b02;
+      --accent: #0077b6;
+      --accent-light: #00b4d8;
+      --success: #2dc653;
+      --danger: #e63946;
+      --warning: #ffb703;
+      --info: #4cc9f0;
+
+      --bg-page: #0f1117;
+      --bg-card: #1a1d27;
+      --bg-card-2: #20242f;
+      --bg-input: #252937;
+      --bg-nav: rgba(15, 17, 23, 0.96);
+
+      --text-primary: #f0f2f5;
+      --text-secondary: #a0aec0;
+      --text-muted: #6b7280;
+
+      --border: rgba(255, 255, 255, .07);
+      --border-focus: #e85d04;
+      --glow-orange: 0 0 20px rgba(232, 93, 4, .3);
+      --glow-blue: 0 0 20px rgba(0, 119, 182, .3);
+
+      --radius-sm: 8px;
+      --radius-md: 14px;
+      --radius-lg: 20px;
+      --radius-xl: 28px;
+      --radius-full: 9999px;
+
+      --shadow-md: 0 8px 30px rgba(0, 0, 0, .4);
+      --shadow-lg: 0 20px 60px rgba(0, 0, 0, .5);
+      --transition: all .25s cubic-bezier(.4, 0, .2, 1);
+      --font-base: 'Inter', sans-serif;
+      --font-display: 'Poppins', sans-serif;
+      --nav-h: 66px;
+    }
+
+    /* =============================================
+       RESET & BASE
+    ============================================= */
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      font-family: var(--font-base);
+      background: var(--bg-page);
+      color: var(--text-primary);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(232, 93, 4, .03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(232, 93, 4, .03) 1px, transparent 1px);
+      background-size: 40px 40px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* =============================================
+       NAVIGATION BAR
+    ============================================= */
+    .navbar {
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+      background: var(--bg-nav);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--border);
+      height: var(--nav-h);
+      display: flex;
+      align-items: center;
+      padding: 0 28px;
+      gap: 16px;
+    }
+
+    .nav-brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      text-decoration: none;
+      flex-shrink: 0;
+    }
+
+    .nav-logo {
+      width: 42px;
+      height: 42px;
+      border-radius: var(--radius-sm);
+      background: linear-gradient(135deg, var(--primary), var(--primary-light));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: var(--glow-orange);
+      flex-shrink: 0;
+    }
+
+    .nav-logo svg {
+      width: 22px;
+      height: 22px;
+      fill: #fff;
+    }
+
+    .nav-brand-text .brand-name {
+      font-family: var(--font-display);
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      line-height: 1.1;
+    }
+
+    .nav-brand-text .brand-sub {
+      font-size: .64rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: .06em;
+    }
+
+    .nav-divider {
+      width: 1px;
+      height: 32px;
+      background: var(--border);
+      margin: 0 4px;
+    }
+
+    .nav-live {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      font-size: .75rem;
+      font-weight: 600;
+      color: var(--success);
+      background: rgba(45, 198, 83, .1);
+      border: 1px solid rgba(45, 198, 83, .25);
+      border-radius: var(--radius-full);
+      padding: 5px 12px;
+    }
+
+    .nav-live-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--success);
+      animation: pulse-dot 1.5s ease-in-out infinite;
+    }
+
+    @keyframes pulse-dot {
+
+      0%,
+      100% {
+        opacity: 1;
+        transform: scale(1);
+      }
+
+      50% {
+        opacity: .5;
+        transform: scale(.7);
+      }
+    }
+
+    .nav-spacer {
+      flex: 1;
+    }
+
+    .nav-user {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .nav-user-avatar {
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--accent), var(--accent-light));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-display);
+      font-size: .82rem;
+      font-weight: 700;
+      color: #fff;
+      flex-shrink: 0;
+    }
+
+    .nav-user-info .user-name {
+      font-size: .82rem;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .nav-user-info .user-role {
+      font-size: .68rem;
+      color: var(--text-muted);
+      text-transform: capitalize;
+    }
+
+    .btn-report {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 9px 18px;
+      background: linear-gradient(135deg, var(--primary), var(--primary-light));
+      border: none;
+      border-radius: var(--radius-sm);
+      color: #fff;
+      font-family: var(--font-display);
+      font-size: .82rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: var(--transition);
+      box-shadow: 0 4px 14px rgba(232, 93, 4, .4);
+      text-decoration: none;
+      white-space: nowrap;
+    }
+
+    .btn-report:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 22px rgba(232, 93, 4, .55);
+      background: linear-gradient(135deg, var(--primary-dark), var(--primary));
+    }
+
+    .btn-report svg {
+      width: 15px;
+      height: 15px;
+    }
+
+    .btn-logout {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 9px 16px;
+      background: rgba(230, 57, 70, .12);
+      border: 1px solid rgba(230, 57, 70, .3);
+      border-radius: var(--radius-sm);
+      color: var(--danger);
+      font-family: var(--font-base);
+      font-size: .82rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: var(--transition);
+      text-decoration: none;
+      white-space: nowrap;
+    }
+
+    .btn-logout:hover {
+      background: rgba(230, 57, 70, .22);
+      border-color: var(--danger);
+      transform: translateY(-1px);
+    }
+
+    .btn-logout svg {
+      width: 15px;
+      height: 15px;
+    }
+
+    /* =============================================
+       MAIN LAYOUT
+    ============================================= */
+    .page-content {
+      position: relative;
+      z-index: 1;
+      padding: 24px 28px;
+      display: grid;
+      grid-template-columns: 1fr 360px;
+      grid-template-rows: auto auto;
+      gap: 22px;
+      max-width: 1800px;
+      margin: 0 auto;
+    }
+
+    /* =============================================
+       STAT BAR
+    ============================================= */
+    .stat-bar {
+      grid-column: 1 / -1;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+    }
+
+    .stat-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 18px 22px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      transition: var(--transition);
+    }
+
+    .stat-card:hover {
+      border-color: rgba(232, 93, 4, .3);
+      box-shadow: var(--glow-orange);
+      transform: translateY(-2px);
+    }
+
+    .stat-icon {
+      width: 46px;
+      height: 46px;
+      border-radius: var(--radius-sm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .stat-icon svg {
+      width: 22px;
+      height: 22px;
+    }
+
+    .stat-icon.orange {
+      background: rgba(232, 93, 4, .15);
+      color: var(--primary-light);
+    }
+
+    .stat-icon.blue {
+      background: rgba(0, 119, 182, .15);
+      color: var(--accent-light);
+    }
+
+    .stat-icon.green {
+      background: rgba(45, 198, 83, .15);
+      color: var(--success);
+    }
+
+    .stat-icon.red {
+      background: rgba(230, 57, 70, .15);
+      color: var(--danger);
+    }
+
+    .stat-value {
+      font-family: var(--font-display);
+      font-size: 1.7rem;
+      font-weight: 800;
+      color: var(--text-primary);
+      line-height: 1;
+    }
+
+    .stat-label {
+      font-size: .72rem;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    /* =============================================
+       LEFT COLUMN
+    ============================================= */
+    .map-column {
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+      min-width: 0;
+    }
+
+    .panel-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      box-shadow: var(--shadow-md);
+    }
+
+    .panel-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 16px 22px;
+      border-bottom: 1px solid var(--border);
+      background: var(--bg-card-2);
+    }
+
+    .panel-header-icon {
+      width: 34px;
+      height: 34px;
+      border-radius: var(--radius-sm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(232, 93, 4, .15);
+      color: var(--primary-light);
+      flex-shrink: 0;
+    }
+
+    .panel-header-icon svg {
+      width: 17px;
+      height: 17px;
+    }
+
+    .panel-title {
+      font-family: var(--font-display);
+      font-size: .95rem;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    .panel-subtitle {
+      font-size: .72rem;
+      color: var(--text-muted);
+      margin-top: 1px;
+    }
+
+    .panel-badge {
+      margin-left: auto;
+      font-size: .68rem;
+      font-weight: 700;
+      padding: 4px 10px;
+      border-radius: var(--radius-full);
+      background: rgba(230, 57, 70, .15);
+      color: var(--danger);
+      border: 1px solid rgba(230, 57, 70, .25);
+    }
+
+    /* MAP */
+    #map {
+      width: 100%;
+      height: 480px;
+    }
+
+    .map-legend {
+      padding: 12px 20px;
+      background: var(--bg-card-2);
+      border-top: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      flex-wrap: wrap;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      font-size: .73rem;
+      color: var(--text-secondary);
+      font-weight: 500;
+    }
+
+    .legend-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .legend-dot.red {
+      background: #e63946;
+      box-shadow: 0 0 6px #e63946;
+    }
+
+    .legend-dot.orange {
+      background: #fb8500;
+      box-shadow: 0 0 6px #fb8500;
+    }
+
+    .legend-dot.green {
+      background: #2dc653;
+      box-shadow: 0 0 6px #2dc653;
+    }
+
+    .legend-dot.blue {
+      background: #00b4d8;
+      box-shadow: 0 0 6px #00b4d8;
+    }
+
+    /* =============================================
+       ROUTE PLANNER
+    ============================================= */
+    .route-planner {
+      padding: 20px 22px;
+    }
+
+    .route-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr 1fr auto auto;
+      gap: 12px;
+      align-items: end;
+    }
+
+    .route-field label {
+      display: block;
+      font-size: .72rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      margin-bottom: 6px;
+      text-transform: uppercase;
+      letter-spacing: .04em;
+    }
+
+    .route-input {
+      width: 100%;
+      padding: 10px 14px;
+      background: var(--bg-input);
+      border: 1.5px solid rgba(255, 255, 255, .1);
+      border-radius: var(--radius-sm);
+      color: var(--text-primary);
+      font-family: var(--font-base);
+      font-size: .84rem;
+      outline: none;
+      transition: var(--transition);
+    }
+
+    .route-input::placeholder {
+      color: var(--text-muted);
+    }
+
+    .route-input:focus {
+      border-color: var(--border-focus);
+      background: #2a2e3e;
+      box-shadow: 0 0 0 3px rgba(232, 93, 4, .15);
+    }
+
+    /* PICK-MODE TOOLBAR */
+    .pick-toolbar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 14px 22px 0;
+      flex-wrap: wrap;
+    }
+
+    .pick-label {
+      font-size: .72rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: .05em;
+      margin-right: 2px;
+    }
+
+    .btn-pick {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 8px 16px;
+      border-radius: var(--radius-sm);
+      font-family: var(--font-base);
+      font-size: .8rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: var(--transition);
+      border: 1.5px solid transparent;
+      white-space: nowrap;
+      position: relative;
+    }
+
+    .btn-pick svg {
+      width: 14px;
+      height: 14px;
+      flex-shrink: 0;
+    }
+
+    .btn-pick.start {
+      background: rgba(45, 198, 83, .1);
+      border-color: rgba(45, 198, 83, .3);
+      color: var(--success);
+    }
+
+    .btn-pick.start:hover {
+      background: rgba(45, 198, 83, .2);
+      border-color: var(--success);
+    }
+
+    .btn-pick.end {
+      background: rgba(0, 180, 216, .1);
+      border-color: rgba(0, 180, 216, .3);
+      color: var(--accent-light);
+    }
+
+    .btn-pick.end:hover {
+      background: rgba(0, 180, 216, .2);
+      border-color: var(--accent-light);
+    }
+
+    /* Active / picking state */
+    .btn-pick.active-start {
+      background: var(--success) !important;
+      border-color: var(--success) !important;
+      color: #fff !important;
+      box-shadow: 0 0 0 3px rgba(45, 198, 83, .25);
+      animation: pickPulse 1.1s ease-in-out infinite;
+    }
+
+    .btn-pick.active-end {
+      background: var(--accent-light) !important;
+      border-color: var(--accent-light) !important;
+      color: #fff !important;
+      box-shadow: 0 0 0 3px rgba(0, 180, 216, .25);
+      animation: pickPulse 1.1s ease-in-out infinite;
+    }
+
+    @keyframes pickPulse {
+
+      0%,
+      100% {
+        box-shadow: 0 0 0 3px rgba(45, 198, 83, .25);
+      }
+
+      50% {
+        box-shadow: 0 0 0 7px rgba(45, 198, 83, .0);
+      }
+    }
+
+    /* Crosshair cursor on map during pick mode */
+    .map-pick-active {
+      cursor: crosshair !important;
+    }
+
+    .map-pick-active .leaflet-grab,
+    .map-pick-active .leaflet-interactive {
+      cursor: crosshair !important;
+    }
+
+    /* Hint banner that appears on map */
+    .map-pick-hint {
+      position: absolute;
+      top: 12px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 700;
+      padding: 8px 18px;
+      border-radius: var(--radius-full);
+      font-size: .78rem;
+      font-weight: 600;
+      white-space: nowrap;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity .25s;
+      letter-spacing: .02em;
+    }
+
+    .map-pick-hint.show {
+      opacity: 1;
+    }
+
+    .map-pick-hint.src {
+      background: rgba(45, 198, 83, .9);
+      color: #fff;
+      box-shadow: 0 4px 14px rgba(45, 198, 83, .4);
+    }
+
+    .map-pick-hint.dst {
+      background: rgba(0, 180, 216, .9);
+      color: #fff;
+      box-shadow: 0 4px 14px rgba(0, 180, 216, .4);
+    }
+
+    .btn-search {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 10px 20px;
+      background: linear-gradient(135deg, var(--primary), var(--primary-light));
+      border: none;
+      border-radius: var(--radius-sm);
+      color: #fff;
+      font-family: var(--font-display);
+      font-size: .83rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: var(--transition);
+      box-shadow: 0 4px 14px rgba(232, 93, 4, .35);
+      white-space: nowrap;
+    }
+
+    .btn-search:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 22px rgba(232, 93, 4, .5);
+    }
+
+    .btn-search svg {
+      width: 15px;
+      height: 15px;
+    }
+
+    .btn-clear {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 10px 16px;
+      background: rgba(255, 255, 255, .06);
+      border: 1px solid rgba(255, 255, 255, .12);
+      border-radius: var(--radius-sm);
+      color: var(--text-secondary);
+      font-family: var(--font-base);
+      font-size: .83rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: var(--transition);
+      white-space: nowrap;
+    }
+
+    .btn-clear:hover {
+      background: rgba(255, 255, 255, .1);
+      border-color: rgba(255, 255, 255, .2);
+      color: var(--text-primary);
+    }
+
+    .btn-clear svg {
+      width: 14px;
+      height: 14px;
+    }
+
+    /* ROUTE SUMMARY CARD */
+    .route-summary {
+      margin-top: 14px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border);
+      overflow: hidden;
+      display: none;
+    }
+
+    .route-summary.show {
+      display: block;
+    }
+
+    .route-summary-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 16px;
+      background: rgba(0, 180, 216, .08);
+      border-bottom: 1px solid rgba(0, 180, 216, .15);
+    }
+
+    .route-summary-header svg {
+      width: 16px;
+      height: 16px;
+      color: var(--accent-light);
+      flex-shrink: 0;
+    }
+
+    .route-summary-title {
+      font-size: .82rem;
+      font-weight: 700;
+      color: var(--accent-light);
+    }
+
+    .route-stats {
+      display: flex;
+      gap: 0;
+      padding: 12px 16px;
+      background: var(--bg-card-2);
+    }
+
+    .route-stat {
+      flex: 1;
+      text-align: center;
+      padding: 0 12px;
+      border-right: 1px solid var(--border);
+    }
+
+    .route-stat:last-child {
+      border-right: none;
+    }
+
+    .route-stat-val {
+      font-family: var(--font-display);
+      font-size: 1.15rem;
+      font-weight: 800;
+      color: var(--text-primary);
+    }
+
+    .route-stat-lbl {
+      font-size: .66rem;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    .route-danger-list {
+      padding: 10px 16px 14px;
+      background: var(--bg-card);
+    }
+
+    .route-danger-title {
+      font-size: .7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .05em;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+    }
+
+    .route-danger-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 7px 10px;
+      background: var(--bg-input);
+      border-radius: var(--radius-sm);
+      border-left: 3px solid var(--danger);
+      margin-bottom: 6px;
+      font-size: .75rem;
+    }
+
+    .route-danger-item:last-child {
+      margin-bottom: 0;
+    }
+
+    .route-danger-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      background: var(--danger);
+      box-shadow: 0 0 6px var(--danger);
+    }
+
+    .route-danger-dot.high {
+      background: var(--warning);
+      box-shadow: 0 0 6px var(--warning);
+    }
+
+    .route-danger-name {
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .route-danger-dist {
+      margin-left: auto;
+      font-size: .68rem;
+      color: var(--text-muted);
+      white-space: nowrap;
+    }
+
+    .route-safe-msg {
+      padding: 10px 16px 14px;
+      background: var(--bg-card);
+      font-size: .78rem;
+      color: var(--success);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* Red traffic signal icon for on-route danger zones */
+    @keyframes signalBlink {
+
+      0%,
+      49% {
+        opacity: 1;
+      }
+
+      50%,
+      100% {
+        opacity: .3;
+      }
+    }
+
+    .route-result {
+      margin-top: 14px;
+      padding: 12px 16px;
+      border-radius: var(--radius-sm);
+      background: rgba(45, 198, 83, .08);
+      border: 1px solid rgba(45, 198, 83, .2);
+      display: none;
+      align-items: center;
+      gap: 10px;
+      font-size: .82rem;
+      color: var(--success);
+      font-weight: 500;
+    }
+
+    .route-result.show {
+      display: flex;
+    }
+
+    .route-result svg {
+      width: 16px;
+      height: 16px;
+      flex-shrink: 0;
+    }
+
+    .route-error {
+      margin-top: 14px;
+      padding: 12px 16px;
+      border-radius: var(--radius-sm);
+      background: rgba(230, 57, 70, .08);
+      border: 1px solid rgba(230, 57, 70, .2);
+      display: none;
+      align-items: center;
+      gap: 10px;
+      font-size: .82rem;
+      color: var(--danger);
+      font-weight: 500;
+    }
+
+    .route-error.show {
+      display: flex;
+    }
+
+    .route-error svg {
+      width: 16px;
+      height: 16px;
+      flex-shrink: 0;
+    }
+
+    /* =============================================
+       RIGHT COLUMN
+    ============================================= */
+    .alerts-column {
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+      min-width: 0;
+    }
+
+    .alerts-body {
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      max-height: 400px;
+      overflow-y: auto;
+    }
+
+    .alerts-body::-webkit-scrollbar {
+      width: 4px;
+    }
+
+    .alerts-body::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    .alerts-body::-webkit-scrollbar-thumb {
+      background: #333;
+      border-radius: 10px;
+    }
+
+    .alert-item {
+      background: var(--bg-card-2);
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--primary);
+      border-radius: var(--radius-sm);
+      padding: 12px 14px;
+      transition: var(--transition);
+      cursor: pointer;
+    }
+
+    .alert-item:hover {
+      border-color: rgba(232, 93, 4, .4);
+      transform: translateX(3px);
+    }
+
+    .alert-item.critical {
+      border-left-color: var(--danger);
+    }
+
+    .alert-item.warning {
+      border-left-color: var(--warning);
+    }
+
+    .alert-item.info {
+      border-left-color: var(--info);
+    }
+
+    .alert-item.safe {
+      border-left-color: var(--success);
+    }
+
+    .alert-row1 {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 5px;
+    }
+
+    .alert-sev {
+      font-size: .62rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      padding: 2px 7px;
+      border-radius: var(--radius-full);
+    }
+
+    .alert-sev.critical {
+      background: rgba(230, 57, 70, .15);
+      color: var(--danger);
+    }
+
+    .alert-sev.warning {
+      background: rgba(255, 183, 3, .12);
+      color: var(--warning);
+    }
+
+    .alert-sev.info {
+      background: rgba(76, 201, 240, .12);
+      color: var(--info);
+    }
+
+    .alert-sev.safe {
+      background: rgba(45, 198, 83, .12);
+      color: var(--success);
+    }
+
+    .alert-title {
+      font-size: .8rem;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .alert-time {
+      margin-left: auto;
+      font-size: .65rem;
+      color: var(--text-muted);
+      white-space: nowrap;
+    }
+
+    .alert-location {
+      font-size: .73rem;
+      color: var(--text-secondary);
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .alert-location svg {
+      width: 11px;
+      height: 11px;
+    }
+
+    .alert-desc {
+      font-size: .72rem;
+      color: var(--text-muted);
+      margin-top: 4px;
+      line-height: 1.5;
+    }
+
+    /* =============================================
+       LOCATION INFO CARD
+    ============================================= */
+    .location-card {
+      padding: 18px 20px;
+    }
+
+    .location-info {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .loc-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      background: var(--bg-input);
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border);
+    }
+
+    .loc-icon {
+      width: 30px;
+      height: 30px;
+      border-radius: var(--radius-sm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .loc-icon svg {
+      width: 14px;
+      height: 14px;
+    }
+
+    .loc-icon.orange {
+      background: rgba(232, 93, 4, .15);
+      color: var(--primary-light);
+    }
+
+    .loc-icon.blue {
+      background: rgba(0, 119, 182, .15);
+      color: var(--accent-light);
+    }
+
+    .loc-icon.green {
+      background: rgba(45, 198, 83, .15);
+      color: var(--success);
+    }
+
+    .loc-label {
+      font-size: .68rem;
+      color: var(--text-muted);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: .04em;
+    }
+
+    .loc-value {
+      font-size: .8rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-top: 1px;
+    }
+
+    /* =============================================
+       EMERGENCY CONTACTS
+    ============================================= */
+    .emergency-card {
+      padding: 18px 20px;
+    }
+
+    .emergency-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .emergency-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 14px;
+      background: var(--bg-input);
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border);
+      transition: var(--transition);
+    }
+
+    .emergency-item:hover {
+      border-color: rgba(232, 93, 4, .3);
+    }
+
+    .emergency-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .emergency-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: var(--radius-sm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .emergency-icon svg {
+      width: 15px;
+      height: 15px;
+    }
+
+    .emergency-name {
+      font-size: .78rem;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .emergency-num {
+      font-size: .7rem;
+      color: var(--text-muted);
+      margin-top: 1px;
+    }
+
+    .btn-call {
+      padding: 5px 12px;
+      border-radius: var(--radius-full);
+      background: rgba(45, 198, 83, .12);
+      border: 1px solid rgba(45, 198, 83, .25);
+      color: var(--success);
+      font-size: .68rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: var(--transition);
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .btn-call:hover {
+      background: rgba(45, 198, 83, .22);
+      border-color: var(--success);
+    }
+
+    /* =============================================
+       TOAST NOTIFICATIONS
+    ============================================= */
+    #toast-container {
+      position: fixed;
+      top: 80px;
+      right: 22px;
+      z-index: 9999;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      pointer-events: none;
+    }
+
+    .toast {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 13px 18px;
+      border-radius: var(--radius-md);
+      background: var(--bg-card);
+      box-shadow: 0 8px 30px rgba(0, 0, 0, .5);
+      font-size: .83rem;
+      font-weight: 500;
+      color: var(--text-primary);
+      min-width: 260px;
+      max-width: 340px;
+      border: 1px solid var(--border);
+      border-left: 4px solid var(--primary);
+      pointer-events: all;
+      animation: toastIn .4s cubic-bezier(.22, 1, .36, 1) both;
+    }
+
+    .toast.success {
+      border-left-color: var(--success);
+    }
+
+    .toast.error {
+      border-left-color: var(--danger);
+    }
+
+    .toast.warning {
+      border-left-color: var(--warning);
+    }
+
+    .toast.fade-out {
+      animation: toastOut .35s ease forwards;
+    }
+
+    @keyframes toastIn {
+      from {
+        opacity: 0;
+        transform: translateX(40px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateX(0);
+      }
+    }
+
+    @keyframes toastOut {
+      to {
+        opacity: 0;
+        transform: translateX(40px);
+      }
+    }
+
+    /* =============================================
+       LEAFLET DARK THEME OVERRIDES
+    ============================================= */
+    .leaflet-container {
+      background: #1a1d27 !important;
+      font-family: var(--font-base) !important;
+    }
+
+    .leaflet-control-zoom a {
+      background: var(--bg-card) !important;
+      color: var(--text-primary) !important;
+      border-color: var(--border) !important;
+    }
+
+    .leaflet-control-zoom a:hover {
+      background: var(--bg-card-2) !important;
+      color: var(--primary) !important;
+    }
+
+    .leaflet-control-attribution {
+      background: rgba(15, 17, 23, .8) !important;
+      color: var(--text-muted) !important;
+    }
+
+    .leaflet-popup-content-wrapper {
+      background: var(--bg-card) !important;
+      color: var(--text-primary) !important;
+      border: 1px solid var(--border) !important;
+      border-radius: var(--radius-md) !important;
+      box-shadow: var(--shadow-lg) !important;
+    }
+
+    .leaflet-popup-tip {
+      background: var(--bg-card) !important;
+    }
+
+    .zone-popup-title {
+      font-family: var(--font-display);
+      font-size: .88rem;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 4px;
+    }
+
+    .zone-popup-type {
+      font-size: .72rem;
+      font-weight: 600;
+      color: var(--danger);
+      text-transform: uppercase;
+      letter-spacing: .04em;
+    }
+
+    .zone-popup-desc {
+      font-size: .76rem;
+      color: var(--text-secondary);
+      margin-top: 5px;
+      line-height: 1.5;
+    }
+
+    .zone-popup-coords {
+      font-size: .68rem;
+      color: var(--text-muted);
+      margin-top: 6px;
+    }
+
+    /* MAP LOADING OVERLAY */
+    .map-loading {
+      position: absolute;
+      inset: 0;
+      background: rgba(15, 17, 23, .7);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 14px;
+      z-index: 800;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity .3s;
+    }
+
+    .map-loading.show {
+      opacity: 1;
+      pointer-events: all;
+    }
+
+    .map-spinner {
+      width: 36px;
+      height: 36px;
+      border: 3px solid rgba(232, 93, 4, .2);
+      border-top-color: var(--primary);
+      border-radius: 50%;
+      animation: spin .8s linear infinite;
+    }
+
+    .map-loading-text {
+      font-size: .82rem;
+      color: var(--text-secondary);
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    /* GPS / LOCATE BUTTON on map */
+    .btn-gps {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      z-index: 600;
+      width: 42px;
+      height: 42px;
+      border-radius: var(--radius-sm);
+      background: var(--bg-card);
+      border: 1.5px solid var(--border);
+      color: var(--accent-light);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: var(--transition);
+      box-shadow: 0 4px 14px rgba(0, 0, 0, .5);
+    }
+
+    .btn-gps:hover {
+      background: var(--bg-card-2);
+      border-color: var(--accent-light);
+      box-shadow: 0 0 0 3px rgba(0, 180, 216, .25);
+      transform: scale(1.07);
+    }
+
+    .btn-gps.locating {
+      border-color: var(--warning);
+      color: var(--warning);
+      animation: gpsPulse 1s ease-in-out infinite;
+    }
+
+    .btn-gps.located {
+      border-color: var(--success);
+      color: var(--success);
+      box-shadow: 0 0 0 3px rgba(45, 198, 83, .2);
+    }
+
+    .btn-gps svg {
+      width: 20px;
+      height: 20px;
+    }
+
+    @keyframes gpsPulse {
+
+      0%,
+      100% {
+        box-shadow: 0 0 0 0 rgba(255, 183, 3, .4);
+      }
+
+      50% {
+        box-shadow: 0 0 0 8px rgba(255, 183, 3, .0);
+      }
+    }
+
+    /* User location marker pulse ring */
+    @keyframes userPulse {
+      0% {
+        transform: scale(0.6);
+        opacity: 1;
+      }
+
+      100% {
+        transform: scale(2.2);
+        opacity: 0;
+      }
+    }
+
+    /* =============================================
+       RESPONSIVE
+    ============================================= */
+    @media (max-width: 1200px) {
+      .page-content {
+        grid-template-columns: 1fr;
+      }
+
+      .stat-bar {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .route-grid {
+        grid-template-columns: 1fr 1fr;
+        grid-template-rows: auto auto;
+      }
+    }
+
+    @media (max-width: 640px) {
+      .page-content {
+        padding: 16px;
+      }
+
+      .navbar {
+        padding: 0 16px;
+        gap: 10px;
+      }
+
+      .nav-user-info,
+      .nav-live {
+        display: none;
+      }
+
+      .stat-bar {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+      }
+
+      .route-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <div id="toast-container" aria-live="polite"></div>
+
+  <!-- NAVIGATION BAR -->
+  <nav class="navbar" role="navigation" aria-label="Main navigation">
+    <a class="nav-brand" href="index.html" aria-label="SafeRoute Home">
+      <div class="nav-logo" aria-hidden="true">
+        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path d="M12 2L3 6v6c0 5.25 3.75 10.15 9 11.35C17.25 22.15 21 17.25 21 12V6L12 2z" />
+        </svg>
+      </div>
+      <div class="nav-brand-text">
+        <div class="brand-name">SafeRoute</div>
+        <div class="brand-sub">Accident Prone Zone Alert</div>
+      </div>
+    </a>
+
+    <div class="nav-divider" aria-hidden="true"></div>
+
+    <div class="nav-live" aria-label="System live">
+      <div class="nav-live-dot" aria-hidden="true"></div>
+      Live Monitoring
+    </div>
+
+    <div class="nav-spacer"></div>
+
+    <div class="nav-user" aria-label="Logged in user">
+      <div class="nav-user-avatar" id="nav-avatar">U</div>
+      <div class="nav-user-info">
+        <div class="user-name" id="nav-username">User</div>
+        <div class="user-role" id="nav-role">user</div>
+      </div>
+    </div>
+
+    <div class="nav-divider" aria-hidden="true"></div>
+
+    <a href="reportzone.html" class="btn-report" id="btn-report-zone" aria-label="Report accident prone zone">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+        <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+        <line x1="12" y1="9" x2="12" y2="13" />
+        <line x1="12" y1="17" x2="12.01" y2="17" />
+      </svg>
+      Report Zone
+    </a>
+
+    <button class="btn-logout" id="btn-logout" aria-label="Logout" onclick="handleLogout()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+        <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4" />
+        <polyline points="16 17 21 12 16 7" />
+        <line x1="21" y1="12" x2="9" y2="12" />
+      </svg>
+      Logout
+    </button>
+  </nav>
+
+  <!-- MAIN CONTENT -->
+  <main class="page-content" role="main">
+
+    <!-- STAT BAR -->
+    <section class="stat-bar" aria-label="Statistics">
+      <div class="stat-card">
+        <div class="stat-icon red" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+            <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+            <line x1="12" y1="9" x2="12" y2="13" />
+            <line x1="12" y1="17" x2="12.01" y2="17" />
+          </svg>
+        </div>
+        <div>
+          <div class="stat-value" data-count="47" data-suffix="">0</div>
+          <div class="stat-label">Active Danger Zones</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon orange" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z" />
+            <circle cx="12" cy="10" r="3" />
+          </svg>
+        </div>
+        <div>
+          <div class="stat-value" data-count="1248" data-suffix="">0</div>
+          <div class="stat-label">Hotspots Mapped</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon green" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+            <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" />
+            <circle cx="9" cy="7" r="4" />
+            <path d="M23 21v-2a4 4 0 00-3-3.87m-4-12a4 4 0 010 7.75" />
+          </svg>
+        </div>
+        <div>
+          <div class="stat-value" data-count="45820" data-suffix="">0</div>
+          <div class="stat-label">Users Protected</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon blue" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
+          </svg>
+        </div>
+        <div>
+          <div class="stat-value" data-count="98" data-suffix="%">0%</div>
+          <div class="stat-label">Alert Accuracy</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- LEFT COLUMN: MAP + ROUTE PLANNER -->
+    <section class="map-column" aria-label="Map and route planning">
+
+      <!-- MAP PANEL -->
+      <div class="panel-card">
+        <div class="panel-header">
+          <div class="panel-header-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+              <polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6" />
+              <line x1="8" y1="2" x2="8" y2="18" />
+              <line x1="16" y1="6" x2="16" y2="22" />
+            </svg>
+          </div>
+          <div>
+            <div class="panel-title">Live Accident Zone Map</div>
+            <div class="panel-subtitle">Real-time hotspots across your region</div>
+          </div>
+          <div class="panel-badge" id="zone-count-badge">12 Active Zones</div>
+        </div>
+
+        <div style="position:relative;" id="map-wrapper">
+          <div id="map" aria-label="Interactive accident zone map" role="application"></div>
+
+          <!-- Pick-mode hint banner -->
+          <div class="map-pick-hint" id="map-pick-hint" aria-live="polite"></div>
+
+          <!-- GPS locate button (top-right of map) -->
+          <button class="btn-gps" id="btn-gps" onclick="locateUser()" aria-label="Show my current location on the map"
+            title="My Location">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+              <circle cx="12" cy="12" r="3" />
+              <path d="M12 2v3M12 19v3M2 12h3M19 12h3" />
+              <circle cx="12" cy="12" r="9" stroke-dasharray="2 3" />
+            </svg>
+          </button>
+
+          <div class="map-loading" id="map-loading" aria-live="polite">
+            <div class="map-spinner" aria-hidden="true"></div>
+            <div class="map-loading-text" id="map-loading-text">Calculating route…</div>
+          </div>
+        </div>
+
+        <div class="map-legend" aria-label="Map legend">
+          <div class="legend-item">
+            <div class="legend-dot red"></div>Critical Zone
+          </div>
+          <div class="legend-item">
+            <div class="legend-dot orange"></div>High Risk
+          </div>
+          <div class="legend-item">
+            <div class="legend-dot blue" style="background:#00b4d8;box-shadow:0 0 6px #00b4d8"></div>Route / Destination
+          </div>
+          <div class="legend-item">
+            <div class="legend-dot" style="background:#4cc9f0;box-shadow:0 0 6px #4cc9f0"></div>Your Location
+          </div>
+        </div>
+      </div>
+
+      <!-- ROUTE PLANNER -->
+      <div class="panel-card">
+        <div class="panel-header">
+          <div class="panel-header-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+              <polygon points="3 11 22 2 13 21 11 13 3 11" />
+            </svg>
+          </div>
+          <div>
+            <div class="panel-title">Route Planner</div>
+            <div class="panel-subtitle">Click map or enter coordinates manually</div>
+          </div>
+        </div>
+
+        <!-- Pick-from-map toolbar -->
+        <div class="pick-toolbar" aria-label="Pick location from map">
+          <span class="pick-label">Pick from map:</span>
+          <button class="btn-pick start" id="btn-pick-start" onclick="activatePick('start')"
+            aria-label="Click to pick start point from map"
+            title="Click then tap a location on the map to set your Source coordinates">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+              <circle cx="12" cy="12" r="4" />
+              <path d="M12 2v4M12 18v4M2 12h4M18 12h4" />
+            </svg>
+            Start Point
+          </button>
+          <button class="btn-pick end" id="btn-pick-end" onclick="activatePick('end')"
+            aria-label="Click to pick end point from map"
+            title="Click then tap a location on the map to set your Destination coordinates">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+              <polygon points="3 11 22 2 13 21 11 13 3 11" />
+            </svg>
+            End Point
+          </button>
+          <span id="pick-status" style="font-size:.72rem;color:var(--text-muted);margin-left:4px;"
+            aria-live="polite"></span>
+        </div>
+
+        <div class="route-planner">
+          <div class="route-grid">
+            <div class="route-field">
+              <label for="src-lat">Source Latitude</label>
+              <input type="number" id="src-lat" class="route-input" placeholder="e.g. 28.6139" step="any"
+                aria-label="Source latitude" />
+            </div>
+            <div class="route-field">
+              <label for="src-lng">Source Longitude</label>
+              <input type="number" id="src-lng" class="route-input" placeholder="e.g. 77.2090" step="any"
+                aria-label="Source longitude" />
+            </div>
+            <div class="route-field">
+              <label for="dst-lat">Destination Latitude</label>
+              <input type="number" id="dst-lat" class="route-input" placeholder="e.g. 19.0760" step="any"
+                aria-label="Destination latitude" />
+            </div>
+            <div class="route-field">
+              <label for="dst-lng">Destination Longitude</label>
+              <input type="number" id="dst-lng" class="route-input" placeholder="e.g. 72.8777" step="any"
+                aria-label="Destination longitude" />
+            </div>
+            <button class="btn-search" id="btn-search-route" onclick="searchRoute()" aria-label="Search route">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                <circle cx="11" cy="11" r="8" />
+                <line x1="21" y1="21" x2="16.65" y2="16.65" />
+              </svg>
+              Search
+            </button>
+            <button class="btn-clear" id="btn-clear-route" onclick="clearRoute()" aria-label="Clear route">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                <line x1="18" y1="6" x2="6" y2="18" />
+                <line x1="6" y1="6" x2="18" y2="18" />
+              </svg>
+              Clear
+            </button>
+          </div>
+
+          <div class="route-result" id="route-result" role="status" aria-live="polite">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+              <path d="M22 11.08V12a10 10 0 11-5.93-9.14" />
+              <polyline points="22 4 12 14.01 9 11.01" />
+            </svg>
+            <span id="route-result-text">Route plotted successfully.</span>
+          </div>
+
+          <div class="route-error" id="route-error" role="alert" aria-live="assertive">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+              <circle cx="12" cy="12" r="10" />
+              <line x1="15" y1="9" x2="9" y2="15" />
+              <line x1="9" y1="9" x2="15" y2="15" />
+            </svg>
+            <span id="route-error-text">Please enter valid coordinates.</span>
+          </div>
+
+          <!-- Route summary card (populated by JS) -->
+          <div class="route-summary" id="route-summary"></div>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- RIGHT COLUMN: ALERTS + INFO + EMERGENCY -->
+    <aside class="alerts-column" aria-label="Alerts and information">
+
+      <!-- ALERTS PANEL -->
+      <div class="panel-card">
+        <div class="panel-header">
+          <div class="panel-header-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+              <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9" />
+              <path d="M13.73 21a2 2 0 01-3.46 0" />
+            </svg>
+          </div>
+          <div>
+            <div class="panel-title">Zone Alerts</div>
+            <div class="panel-subtitle">Safety guidance near your route</div>
+          </div>
+          <div class="panel-badge" id="alert-count-badge">8 Alerts</div>
+        </div>
+        <div class="alerts-body" id="alerts-body" role="list" aria-label="Zone alerts"></div>
+      </div>
+
+      <!-- LOCATION INFO -->
+      <div class="panel-card">
+        <div class="panel-header">
+          <div class="panel-header-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+              <circle cx="12" cy="12" r="3" />
+              <path
+                d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83" />
+            </svg>
+          </div>
+          <div>
+            <div class="panel-title">Location Details</div>
+            <div class="panel-subtitle">Current map viewport</div>
+          </div>
+        </div>
+        <div class="location-card">
+          <div class="location-info">
+            <div class="loc-row">
+              <div class="loc-icon orange" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                  <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z" />
+                  <circle cx="12" cy="10" r="3" />
+                </svg>
+              </div>
+              <div>
+                <div class="loc-label">Map Center</div>
+                <div class="loc-value" id="loc-center">20.5937° N, 78.9629° E</div>
+              </div>
+            </div>
+            <div class="loc-row">
+              <div class="loc-icon blue" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                  <circle cx="11" cy="11" r="8" />
+                  <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                </svg>
+              </div>
+              <div>
+                <div class="loc-label">Zoom Level</div>
+                <div class="loc-value" id="loc-zoom">5 / 18</div>
+              </div>
+            </div>
+            <div class="loc-row">
+              <div class="loc-icon green" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                  <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+                  <line x1="12" y1="9" x2="12" y2="13" />
+                  <line x1="12" y1="17" x2="12.01" y2="17" />
+                </svg>
+              </div>
+              <div>
+                <div class="loc-label">Zones in View</div>
+                <div class="loc-value" id="loc-zones-visible">12 zones visible</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- EMERGENCY CONTACTS -->
+      <div class="panel-card">
+        <div class="panel-header">
+          <div class="panel-header-icon" style="background:rgba(230,57,70,.15);color:var(--danger);" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+              <path
+                d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.18 19.79 19.79 0 01.11.56 2 2 0 012.12-1.6h3a2 2 0 012 1.72 12.8 12.8 0 00.7 2.81 2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45 12.8 12.8 0 002.81.7 2 2 0 011.72 2.01z" />
+            </svg>
+          </div>
+          <div>
+            <div class="panel-title">Emergency Contacts</div>
+            <div class="panel-subtitle">Quick access helplines</div>
+          </div>
+        </div>
+        <div class="emergency-card">
+          <div class="emergency-list">
+            <div class="emergency-item">
+              <div class="emergency-left">
+                <div class="emergency-icon" style="background:rgba(230,57,70,.15);">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="#e63946" stroke-width="2.2">
+                    <rect x="1" y="7" width="22" height="13" rx="2" />
+                    <path d="M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2" />
+                    <line x1="12" y1="11" x2="12" y2="16" />
+                    <line x1="9.5" y1="13.5" x2="14.5" y2="13.5" />
+                  </svg>
+                </div>
+                <div>
+                  <div class="emergency-name">Ambulance</div>
+                  <div class="emergency-num">108</div>
+                </div>
+              </div>
+              <a href="tel:108" class="btn-call" aria-label="Call ambulance">📞 Call</a>
+            </div>
+            <div class="emergency-item">
+              <div class="emergency-left">
+                <div class="emergency-icon" style="background:rgba(0,119,182,.15);">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="#0077b6" stroke-width="2.2">
+                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                  </svg>
+                </div>
+                <div>
+                  <div class="emergency-name">Police</div>
+                  <div class="emergency-num">100</div>
+                </div>
+              </div>
+              <a href="tel:100" class="btn-call" aria-label="Call police">📞 Call</a>
+            </div>
+            <div class="emergency-item">
+              <div class="emergency-left">
+                <div class="emergency-icon" style="background:rgba(251,133,0,.15);">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="#fb8500" stroke-width="2.2">
+                    <polygon points="3 11 22 2 13 21 11 13 3 11" />
+                  </svg>
+                </div>
+                <div>
+                  <div class="emergency-name">Traffic Helpline</div>
+                  <div class="emergency-num">1095</div>
+                </div>
+              </div>
+              <a href="tel:1095" class="btn-call" aria-label="Call traffic helpline">📞 Call</a>
+            </div>
+            <div class="emergency-item">
+              <div class="emergency-left">
+                <div class="emergency-icon" style="background:rgba(45,198,83,.15);">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="#2dc653" stroke-width="2.2">
+                    <circle cx="12" cy="12" r="10" />
+                    <line x1="12" y1="8" x2="12" y2="12" />
+                    <line x1="12" y1="16" x2="12.01" y2="16" />
+                  </svg>
+                </div>
+                <div>
+                  <div class="emergency-name">National Emergency</div>
+                  <div class="emergency-num">112</div>
+                </div>
+              </div>
+              <a href="tel:112" class="btn-call" aria-label="Call national emergency">📞 Call</a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </aside>
+  </main>
+
+  <!-- Leaflet JS -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+  <script>
+    'use strict';
+
+    /* SESSION CHECK */
+    (function initUser() {
+      try {
+        const raw = sessionStorage.getItem('apz_session');
+        if (!raw) return;
+        const s = JSON.parse(raw);
+        const n = document.getElementById('nav-username');
+        const r = document.getElementById('nav-role');
+        const a = document.getElementById('nav-avatar');
+        if (n && s.name) n.textContent = s.name;
+        if (r && s.role) r.textContent = s.role;
+        if (a && s.name) a.textContent = s.name.charAt(0).toUpperCase();
+      } catch (_) { }
+    })();
+
+    /* LOGOUT */
+    function handleLogout() {
+      showToast('Signing out…', 'info');
+      sessionStorage.removeItem('apz_session');
+      setTimeout(() => { window.location.href = 'login.html'; }, 1400);
+    }
+
+    /* TOAST */
+    const TOAST_ICONS = {
+      success: '<svg viewBox="0 0 24 24" fill="none" stroke="#2dc653" stroke-width="2.5" width="18" height="18"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>',
+      error: '<svg viewBox="0 0 24 24" fill="none" stroke="#e63946" stroke-width="2.5" width="18" height="18"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>',
+      warning: '<svg viewBox="0 0 24 24" fill="none" stroke="#ffb703" stroke-width="2.5" width="18" height="18"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>',
+      info: '<svg viewBox="0 0 24 24" fill="none" stroke="#e85d04" stroke-width="2.5" width="18" height="18"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>',
+    };
+    function showToast(message, type, duration) {
+      duration = duration || 4000;
+      type = type || 'info';
+      const c = document.getElementById('toast-container');
+      if (!c) return;
+      const t = document.createElement('div');
+      t.className = 'toast ' + type;
+      t.innerHTML = (TOAST_ICONS[type] || TOAST_ICONS.info) + '<span>' + message + '</span>';
+      c.appendChild(t);
+      setTimeout(() => {
+        t.classList.add('fade-out');
+        t.addEventListener('animationend', () => t.remove(), { once: true });
+      }, duration);
+    }
+
+    /* ACCIDENT ZONES DATA */
+    const ACCIDENT_ZONES = [
+      { id: 1, lat: 28.6139, lng: 77.2090, name: 'Delhi — Chandni Chowk', type: 'critical', incidents: 34, desc: 'High pedestrian density, frequent peak-hour accidents.' },
+      { id: 2, lat: 19.0760, lng: 72.8777, name: 'Mumbai — Andheri Junction', type: 'critical', incidents: 28, desc: 'Heavy traffic merging, poor lighting at night.' },
+      { id: 3, lat: 12.9716, lng: 77.5946, name: 'Bengaluru — Silk Board', type: 'high', incidents: 22, desc: 'Notorious congestion with frequent rear-end collisions.' },
+      { id: 4, lat: 22.5726, lng: 88.3639, name: 'Kolkata — Park Street', type: 'critical', incidents: 19, desc: 'Sharp turns and inadequate signage.' },
+      { id: 5, lat: 17.3850, lng: 78.4867, name: 'Hyderabad — Hussain Sagar', type: 'high', incidents: 15, desc: 'Speeding vehicles on the tank bund road.' },
+      { id: 6, lat: 13.0827, lng: 80.2707, name: 'Chennai — Anna Salai', type: 'high', incidents: 18, desc: 'Multiple junctions with poor signal compliance.' },
+      { id: 7, lat: 23.0225, lng: 72.5714, name: 'Ahmedabad — SG Highway', type: 'critical', incidents: 31, desc: 'Expressway accidents due to over-speeding.' },
+      { id: 8, lat: 18.5204, lng: 73.8567, name: 'Pune — Katraj Ghat', type: 'critical', incidents: 27, desc: 'Steep ghat with blind corners and fog.' },
+      { id: 9, lat: 26.9124, lng: 75.7873, name: 'Jaipur — Ajmer Road', type: 'high', incidents: 14, desc: 'High-speed national highway with frequent crossings.' },
+      { id: 10, lat: 21.1458, lng: 79.0882, name: 'Nagpur — Wardha Road', type: 'high', incidents: 12, desc: 'Trucks and two-wheelers sharing narrow lanes.' },
+      { id: 11, lat: 11.0168, lng: 76.9558, name: 'Coimbatore — Avinashi Road', type: 'high', incidents: 16, desc: 'Industrial traffic mixing with commuters.' },
+      { id: 12, lat: 25.5941, lng: 85.1376, name: 'Patna — Gandhi Setu Bridge', type: 'critical', incidents: 23, desc: 'Narrow bridge with heavy two-way traffic.' },
+    ];
+
+    /* ALERTS DATA */
+    const ALERTS_DATA = [
+      { severity: 'critical', title: 'Multiple Collisions Reported', location: 'Delhi — Chandni Chowk', time: '2 min ago', desc: 'Ambulance en route. Avoid stretch — use Ring Road.' },
+      { severity: 'warning', title: 'Heavy Fog — Low Visibility', location: 'Pune — Katraj Ghat', time: '8 min ago', desc: 'Visibility below 50m. Drive slow, fog lights on.' },
+      { severity: 'critical', title: 'Fatal Accident — Road Blocked', location: 'Ahmedabad — SG Highway', time: '15 min ago', desc: 'Police deployed. Alternative: BRTS corridor.' },
+      { severity: 'warning', title: 'Waterlogging — Slow Traffic', location: 'Mumbai — Andheri Junction', time: '22 min ago', desc: 'WB lane flooded. Expect 45-min delay.' },
+      { severity: 'info', title: 'Speed Camera Active', location: 'Jaipur — Ajmer Road', time: '30 min ago', desc: 'Enforcement active. Speed limit 80 km/h.' },
+      { severity: 'critical', title: 'Truck Overturned — All Lanes', location: 'Nagpur — Wardha Road', time: '45 min ago', desc: 'Crane deployed. Clearance est. 2 hours.' },
+      { severity: 'warning', title: 'Pothole — Tyre Damage Risk', location: 'Patna — Gandhi Setu', time: '1 hr ago', desc: 'Large potholes in right lane. Reduce speed.' },
+      { severity: 'safe', title: 'Congestion Cleared', location: 'Bengaluru — Silk Board', time: '1.5 hr ago', desc: 'Traffic flowing at normal speed now.' },
+    ];
+
+    /* RENDER ALERTS */
+    function renderAlerts() {
+      const c = document.getElementById('alerts-body');
+      if (!c) return;
+      const pin = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" width="11" height="11"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>';
+      c.innerHTML = ALERTS_DATA.map(a =>
+        '<div class="alert-item ' + a.severity + '" role="listitem" tabindex="0">' +
+        '<div class="alert-row1">' +
+        '<span class="alert-sev ' + a.severity + '">' + a.severity + '</span>' +
+        '<span class="alert-title">' + a.title + '</span>' +
+        '<span class="alert-time">' + a.time + '</span>' +
+        '</div>' +
+        '<div class="alert-location">' + pin + ' ' + a.location + '</div>' +
+        '<div class="alert-desc">' + a.desc + '</div>' +
+        '</div>'
+      ).join('');
+      document.getElementById('alert-count-badge').textContent = ALERTS_DATA.length + ' Alerts';
+    }
+
+    /* MAP */
+    var map, routeLayer = null, srcMarker = null, dstMarker = null;
+    var userLocationMarker = null, userAccCircle = null;
+    var pickMode = null; // 'start' | 'end' | null
+
+    /* PICK-MODE CONTROLS */
+    function activatePick(mode) {
+      /* If same mode clicked again — cancel */
+      if (pickMode === mode) { deactivatePick(); return; }
+
+      pickMode = mode;
+      var hint = document.getElementById('map-pick-hint');
+      var status = document.getElementById('pick-status');
+      var mapEl = document.getElementById('map');
+
+      /* Reset both button states */
+      document.getElementById('btn-pick-start').classList.remove('active-start', 'active-end');
+      document.getElementById('btn-pick-end').classList.remove('active-start', 'active-end');
+
+      if (mode === 'start') {
+        document.getElementById('btn-pick-start').classList.add('active-start');
+        hint.className = 'map-pick-hint src show';
+        hint.textContent = '\ud83d\udccd Click anywhere on the map to set the Start Point';
+        if (status) status.textContent = 'Picking start…';
+      } else {
+        document.getElementById('btn-pick-end').classList.add('active-end');
+        hint.className = 'map-pick-hint dst show';
+        hint.textContent = '\ud83c\udfc1 Click anywhere on the map to set the End Point';
+        if (status) status.textContent = 'Picking end…';
+      }
+
+      /* Crosshair cursor on the map */
+      if (mapEl) mapEl.classList.add('map-pick-active');
+      /* Disable map drag while picking so accidental drags don't register */
+      map.dragging.disable();
+    }
+
+    function deactivatePick() {
+      pickMode = null;
+      document.getElementById('btn-pick-start').classList.remove('active-start', 'active-end');
+      document.getElementById('btn-pick-end').classList.remove('active-start', 'active-end');
+      var hint = document.getElementById('map-pick-hint');
+      var status = document.getElementById('pick-status');
+      var mapEl = document.getElementById('map');
+      if (hint) { hint.className = 'map-pick-hint'; hint.textContent = ''; }
+      if (status) status.textContent = '';
+      if (mapEl) mapEl.classList.remove('map-pick-active');
+      map.dragging.enable();
+    }
+
+    function makeZoneIcon(type) {
+      var color = type === 'critical' ? '#e63946' : '#fb8500';
+      var pulse = type === 'critical'
+        ? '<circle cx="16" cy="16" r="14" fill="' + color + '22" stroke="' + color + '55" stroke-width="1.5" style="animation:zpls 1.4s ease-in-out infinite"/>'
+        : '';
+      var html = '<svg xmlns="http://www.w3.org/2000/svg" width="32" height="40" viewBox="0 0 32 40">' +
+        '<defs><style>@keyframes zpls{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.5);opacity:0}}</style></defs>' +
+        pulse +
+        '<circle cx="16" cy="16" r="12" fill="' + color + '" opacity="0.92"/>' +
+        '<circle cx="16" cy="16" r="7" fill="' + color + '" stroke="#fff" stroke-width="2"/>' +
+        '<path d="M16 11v4M16 19h.01" stroke="#fff" stroke-width="2" stroke-linecap="round"/>' +
+        '<polygon points="16,36 10,26 22,26" fill="' + color + '"/>' +
+        '</svg>';
+      return L.divIcon({ html: html, className: '', iconSize: [32, 40], iconAnchor: [16, 40], popupAnchor: [0, -42] });
+    }
+
+    function initMap() {
+      map = L.map('map', { center: [20.5937, 78.9629], zoom: 5 });
+
+      L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+        attribution: '&copy; OpenStreetMap contributors &copy; CARTO',
+        subdomains: 'abcd',
+        maxZoom: 19,
+      }).addTo(map);
+
+      ACCIDENT_ZONES.forEach(function (zone) {
+        L.marker([zone.lat, zone.lng], { icon: makeZoneIcon(zone.type) })
+          .addTo(map)
+          .bindPopup(
+            '<div style="min-width:200px">' +
+            '<div class="zone-popup-title">' + zone.name + '</div>' +
+            '<div class="zone-popup-type">&#9888; ' + (zone.type === 'critical' ? 'Critical Zone' : 'High Risk Zone') + '</div>' +
+            '<div class="zone-popup-desc">' + zone.desc + '</div>' +
+            '<div class="zone-popup-coords">&#128205; ' + zone.lat.toFixed(4) + '&deg; N, ' + zone.lng.toFixed(4) + '&deg; E</div>' +
+            '<div class="zone-popup-desc" style="margin-top:6px;color:#e63946;font-weight:600;">&#128680; ' + zone.incidents + ' incidents in last 30 days</div>' +
+            '</div>',
+            { maxWidth: 240 }
+          );
+      });
+
+      document.getElementById('zone-count-badge').textContent = ACCIDENT_ZONES.length + ' Active Zones';
+      map.on('moveend zoomend', updateLocationInfo);
+      updateLocationInfo();
+
+      /* Map click handler for pick-mode */
+      map.on('click', function (e) {
+        if (!pickMode) return;
+        var lat = e.latlng.lat;
+        var lng = e.latlng.lng;
+
+        if (pickMode === 'start') {
+          document.getElementById('src-lat').value = lat.toFixed(6);
+          document.getElementById('src-lng').value = lng.toFixed(6);
+          /* Place / refresh a temporary preview pin */
+          if (srcMarker) map.removeLayer(srcMarker);
+          srcMarker = L.marker([lat, lng], { icon: SRC_ICON })
+            .addTo(map)
+            .bindPopup(
+              '<div class="zone-popup-title" style="color:#2dc653">&#128204; Start Point</div>' +
+              '<div class="zone-popup-coords">' + lat.toFixed(5) + '&deg; N, ' + lng.toFixed(5) + '&deg; E</div>'
+            ).openPopup();
+          showToast('\u2705 Start point set: ' + lat.toFixed(4) + ', ' + lng.toFixed(4), 'success', 3000);
+        } else if (pickMode === 'end') {
+          document.getElementById('dst-lat').value = lat.toFixed(6);
+          document.getElementById('dst-lng').value = lng.toFixed(6);
+          if (dstMarker) map.removeLayer(dstMarker);
+          dstMarker = L.marker([lat, lng], { icon: DST_ICON })
+            .addTo(map)
+            .bindPopup(
+              '<div class="zone-popup-title" style="color:#00b4d8">&#127987; End Point</div>' +
+              '<div class="zone-popup-coords">' + lat.toFixed(5) + '&deg; N, ' + lng.toFixed(5) + '&deg; E</div>'
+            ).openPopup();
+          showToast('\u2705 End point set: ' + lat.toFixed(4) + ', ' + lng.toFixed(4), 'info', 3000);
+        }
+
+        deactivatePick();
+      });
+    }
+
+    function updateLocationInfo() {
+      if (!map) return;
+      var c = map.getCenter();
+      var z = map.getZoom();
+      document.getElementById('loc-center').textContent =
+        Math.abs(c.lat).toFixed(4) + (c.lat >= 0 ? '\u00b0 N' : '\u00b0 S') + ', ' +
+        Math.abs(c.lng).toFixed(4) + (c.lng >= 0 ? '\u00b0 E' : '\u00b0 W');
+      document.getElementById('loc-zoom').textContent = z + ' / 18';
+      var bounds = map.getBounds();
+      var vis = ACCIDENT_ZONES.filter(function (z) { return bounds.contains([z.lat, z.lng]); });
+      document.getElementById('loc-zones-visible').textContent = vis.length + ' zones visible';
+    }
+
+    /* ROUTE PLANNER */
+    var SRC_ICON = L.divIcon({
+      html: '<svg xmlns="http://www.w3.org/2000/svg" width="28" height="36" viewBox="0 0 28 36"><circle cx="14" cy="14" r="12" fill="#2dc653" stroke="#fff" stroke-width="2.5"/><text x="14" y="19" text-anchor="middle" fill="#fff" font-size="11" font-weight="700" font-family="sans-serif">S</text><polygon points="14,34 8,24 20,24" fill="#2dc653"/></svg>',
+      className: '', iconSize: [28, 36], iconAnchor: [14, 36], popupAnchor: [0, -38]
+    });
+    var DST_ICON = L.divIcon({
+      html: '<svg xmlns="http://www.w3.org/2000/svg" width="28" height="36" viewBox="0 0 28 36"><circle cx="14" cy="14" r="12" fill="#00b4d8" stroke="#fff" stroke-width="2.5"/><text x="14" y="19" text-anchor="middle" fill="#fff" font-size="11" font-weight="700" font-family="sans-serif">D</text><polygon points="14,34 8,24 20,24" fill="#00b4d8"/></svg>',
+      className: '', iconSize: [28, 36], iconAnchor: [14, 36], popupAnchor: [0, -38]
+    });
+
+    function showRouteResult(text) {
+      document.getElementById('route-result-text').textContent = text;
+      document.getElementById('route-result').classList.add('show');
+      document.getElementById('route-error').classList.remove('show');
+    }
+    function showRouteError(text) {
+      document.getElementById('route-error-text').textContent = text;
+      document.getElementById('route-error').classList.add('show');
+      document.getElementById('route-result').classList.remove('show');
+    }
+    function hideMessages() {
+      document.getElementById('route-result').classList.remove('show');
+      document.getElementById('route-error').classList.remove('show');
+    }
+
+    function haversineKm(lat1, lng1, lat2, lng2) {
+      var R = 6371;
+      var dLat = (lat2 - lat1) * Math.PI / 180;
+      var dLng = (lng2 - lng1) * Math.PI / 180;
+      var a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+        Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLng / 2) * Math.sin(dLng / 2);
+      return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    }
+
+    /* ═══════════════════════════════════
+       ROUTE PLANNER — OSRM SHORTEST PATH
+    ═══════════════════════════════════ */
+    var dangerMarkers = [];   // on-route accident zone markers
+    var dangerCircles = [];   // red highlight circles
+
+    /* Make a red traffic-signal icon for danger zones on route */
+    function makeDangerSignalIcon(type) {
+      var color = type === 'critical' ? '#e63946' : '#fb8500';
+      var html =
+        '<div style="position:relative;width:30px;height:44px;">' +
+        /* pole */
+        '<div style="position:absolute;bottom:0;left:50%;transform:translateX(-50%);width:3px;height:18px;background:' + color + '88;"></div>' +
+        /* signal box */
+        '<div style="' +
+        'position:absolute;top:0;left:50%;transform:translateX(-50%);' +
+        'width:22px;height:26px;border-radius:4px;' +
+        'background:#1a1d27;border:2px solid ' + color + ';' +
+        'display:flex;flex-direction:column;align-items:center;justify-content:space-evenly;' +
+        'padding:3px 0;box-shadow:0 0 10px ' + color + '88;' +
+        '">' +
+        '<div style="width:8px;height:8px;border-radius:50%;background:' + color + ';box-shadow:0 0 6px ' + color + ';animation:signalBlink .9s step-start infinite;"></div>' +
+        '<div style="width:8px;height:8px;border-radius:50%;background:#444;"></div>' +
+        '<div style="width:8px;height:8px;border-radius:50%;background:#444;"></div>' +
+        '</div>' +
+        '</div>';
+      return L.divIcon({ html: html, className: '', iconSize: [30, 44], iconAnchor: [15, 44], popupAnchor: [0, -46] });
+    }
+
+    /* Point-to-segment distance in km (for route proximity check) */
+    function ptToSegDist(p, a, b) {
+      var dx = b[0] - a[0], dy = b[1] - a[1];
+      if (dx === 0 && dy === 0) return haversineKm(p[0], p[1], a[0], a[1]);
+      var t = ((p[0] - a[0]) * dx + (p[1] - a[1]) * dy) / (dx * dx + dy * dy);
+      t = Math.max(0, Math.min(1, t));
+      return haversineKm(p[0], p[1], a[0] + t * dx, a[1] + t * dy);
+    }
+
+    /* Minimum distance from a zone to any segment of the route polyline */
+    function zoneToRouteDist(zone, coords) {
+      var minD = Infinity;
+      for (var i = 0; i < coords.length - 1; i++) {
+        var d = ptToSegDist([zone.lat, zone.lng], coords[i], coords[i + 1]);
+        if (d < minD) minD = d;
+      }
+      return minD;
+    }
+
+    function clearDangerOverlays() {
+      dangerMarkers.forEach(function (m) { map.removeLayer(m); });
+      dangerCircles.forEach(function (c) { map.removeLayer(c); });
+      dangerMarkers = [];
+      dangerCircles = [];
+    }
+
+    function buildRouteSummary(distKm, durationSec, zones) {
+      var hrs = Math.floor(durationSec / 3600);
+      var mins = Math.round((durationSec % 3600) / 60);
+      var timeStr = hrs > 0 ? hrs + ' hr ' + mins + ' min' : mins + ' min';
+      var distStr = distKm >= 1 ? distKm.toFixed(1) + ' km' : Math.round(distKm * 1000) + ' m';
+
+      var dangerHTML = '';
+      if (zones.length === 0) {
+        dangerHTML =
+          '<div class="route-safe-msg">' +
+          '<svg viewBox="0 0 24 24" fill="none" stroke="#2dc653" stroke-width="2.2" width="16" height="16"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>' +
+          'No accident zones detected directly on this route. Drive safely!' +
+          '</div>';
+      } else {
+        var items = zones.map(function (z) {
+          var dot = z.type === 'critical' ? 'route-danger-dot' : 'route-danger-dot high';
+          return '<div class="route-danger-item">' +
+            '<div class="' + dot + '"></div>' +
+            '<span class="route-danger-name">' + z.name + '</span>' +
+            '<span class="route-danger-dist">' + z.distKm.toFixed(1) + ' km off route</span>' +
+            '</div>';
+        }).join('');
+        dangerHTML =
+          '<div class="route-danger-list">' +
+          '<div class="route-danger-title">&#128680; ' + zones.length + ' Danger Zone(s) on Your Route</div>' +
+          items +
+          '</div>';
+      }
+
+      document.getElementById('route-summary').innerHTML =
+        '<div class="route-summary-header">' +
+        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polygon points="3 11 22 2 13 21 11 13 3 11"/></svg>' +
+        '<span class="route-summary-title">Shortest Road Route Found</span>' +
+        '</div>' +
+        '<div class="route-stats">' +
+        '<div class="route-stat"><div class="route-stat-val">' + distStr + '</div><div class="route-stat-lbl">Road Distance</div></div>' +
+        '<div class="route-stat"><div class="route-stat-val">' + timeStr + '</div><div class="route-stat-lbl">Est. Drive Time</div></div>' +
+        '<div class="route-stat"><div class="route-stat-val" style="color:' + (zones.length > 0 ? 'var(--danger)' : 'var(--success)') + '">' + zones.length + '</div><div class="route-stat-lbl">Danger Zones</div></div>' +
+        '</div>' +
+        dangerHTML;
+
+      document.getElementById('route-summary').classList.add('show');
+    }
+
+    function searchRoute() {
+      var srcLat = parseFloat(document.getElementById('src-lat').value);
+      var srcLng = parseFloat(document.getElementById('src-lng').value);
+      var dstLat = parseFloat(document.getElementById('dst-lat').value);
+      var dstLng = parseFloat(document.getElementById('dst-lng').value);
+
+      hideMessages();
+      document.getElementById('route-summary').classList.remove('show');
+
+      if (isNaN(srcLat) || isNaN(srcLng) || isNaN(dstLat) || isNaN(dstLng)) {
+        showRouteError('Please fill in all four coordinate fields.');
+        showToast('All coordinate fields are required.', 'error');
+        return;
+      }
+      if (srcLat < -90 || srcLat > 90 || dstLat < -90 || dstLat > 90) {
+        showRouteError('Latitude must be between -90 and 90.');
+        showToast('Latitude out of valid range.', 'error');
+        return;
+      }
+      if (srcLng < -180 || srcLng > 180 || dstLng < -180 || dstLng > 180) {
+        showRouteError('Longitude must be between -180 and 180.');
+        showToast('Longitude out of valid range.', 'error');
+        return;
+      }
+
+      var loading = document.getElementById('map-loading');
+      var loadingText = document.getElementById('map-loading-text');
+      if (loadingText) loadingText.textContent = 'Finding shortest path\u2026';
+      loading.classList.add('show');
+
+      /* Clear previous route layers */
+      if (srcMarker) { map.removeLayer(srcMarker); srcMarker = null; }
+      if (dstMarker) { map.removeLayer(dstMarker); dstMarker = null; }
+      if (routeLayer) { map.removeLayer(routeLayer); routeLayer = null; }
+      clearDangerOverlays();
+
+      /* OSRM public routing API (free, OpenStreetMap-based) */
+      var osrmUrl =
+        'https://router.project-osrm.org/route/v1/driving/' +
+        srcLng + ',' + srcLat + ';' + dstLng + ',' + dstLat +
+        '?overview=full&geometries=geojson&steps=false';
+
+      fetch(osrmUrl)
+        .then(function (res) {
+          if (!res.ok) throw new Error('OSRM API error: ' + res.status);
+          return res.json();
+        })
+        .then(function (data) {
+          loading.classList.remove('show');
+
+          if (!data.routes || data.routes.length === 0) {
+            showRouteError('No road route found between these coordinates. Try points on a road.');
+            showToast('No route found — try different coordinates.', 'error');
+            return;
+          }
+
+          var route = data.routes[0];
+          var distKm = route.distance / 1000;
+          var durSec = route.duration;
+          var coords = route.geometry.coordinates.map(function (c) { return [c[1], c[0]]; }); // [lng,lat] → [lat,lng]
+
+          /* Draw the real road route — two-layer effect (shadow + bright line) */
+          L.polyline(coords, {
+            color: '#0a3d6b', weight: 8, opacity: .7, lineCap: 'round', lineJoin: 'round'
+          }).addTo(map); /* shadow */
+          routeLayer = L.polyline(coords, {
+            color: '#00b4d8', weight: 4, opacity: .95, lineCap: 'round', lineJoin: 'round'
+          }).addTo(map);
+
+          /* Place S and D markers */
+          srcMarker = L.marker([srcLat, srcLng], { icon: SRC_ICON }).addTo(map)
+            .bindPopup(
+              '<div class="zone-popup-title" style="color:#2dc653">&#128204; Start Point</div>' +
+              '<div class="zone-popup-coords">' + srcLat.toFixed(5) + '&deg; N, ' + srcLng.toFixed(5) + '&deg; E</div>'
+            );
+          dstMarker = L.marker([dstLat, dstLng], { icon: DST_ICON }).addTo(map)
+            .bindPopup(
+              '<div class="zone-popup-title" style="color:#00b4d8">&#127987; End Point</div>' +
+              '<div class="zone-popup-coords">' + dstLat.toFixed(5) + '&deg; N, ' + dstLng.toFixed(5) + '&deg; E</div>'
+            );
+
+          /* Fit map to route */
+          var bounds = L.latLngBounds(coords);
+          map.fitBounds(bounds, { padding: [50, 50] });
+
+          /* ── DETECT DANGER ZONES NEAR ROUTE ── */
+          var DANGER_THRESHOLD_KM = 2.5; /* zones within 2.5 km of the road line */
+          var flaggedZones = [];
+
+          ACCIDENT_ZONES.forEach(function (zone) {
+            var d = zoneToRouteDist(zone, coords);
+            if (d <= DANGER_THRESHOLD_KM) {
+              zone.distKm = d;
+              flaggedZones.push(zone);
+
+              /* Red traffic-signal marker (replaces the generic zone marker) */
+              var sigMarker = L.marker([zone.lat, zone.lng], {
+                icon: makeDangerSignalIcon(zone.type),
+                zIndexOffset: 500
+              }).addTo(map)
+                .bindPopup(
+                  '<div style="min-width:200px">' +
+                  '<div class="zone-popup-title" style="color:#e63946">&#128680; ON-ROUTE DANGER</div>' +
+                  '<div class="zone-popup-type" style="color:#e63946">' + zone.name + '</div>' +
+                  '<div class="zone-popup-desc">' + zone.desc + '</div>' +
+                  '<div class="zone-popup-coords">Distance from route: ~' + d.toFixed(2) + ' km</div>' +
+                  '<div class="zone-popup-desc" style="margin-top:6px;color:#e63946;font-weight:600;">' +
+                  '&#128204; ' + zone.incidents + ' incidents in last 30 days' +
+                  '</div>' +
+                  '</div>',
+                  { maxWidth: 240 }
+                );
+              dangerMarkers.push(sigMarker);
+
+              /* Danger radius circle */
+              var circle = L.circle([zone.lat, zone.lng], {
+                radius: 1500,
+                color: '#e63946',
+                fillColor: '#e63946',
+                fillOpacity: 0.08,
+                weight: 1.5,
+                dashArray: '5 4',
+              }).addTo(map);
+              dangerCircles.push(circle);
+            }
+          });
+
+          /* ── BUILD SUMMARY ── */
+          buildRouteSummary(distKm, durSec, flaggedZones);
+
+          if (flaggedZones.length > 0) {
+            showToast('\u26a0 ' + flaggedZones.length + ' accident zone(s) on your route! Check map.', 'warning', 6000);
+          } else {
+            showToast('\u2713 Shortest path found — ' + distKm.toFixed(1) + ' km. Route is clear!', 'success');
+          }
+        })
+        .catch(function (err) {
+          loading.classList.remove('show');
+          console.error('OSRM error:', err);
+          /* Fallback: straight-line route if OSRM unavailable */
+          showRouteError('Routing service unavailable. Showing straight-line estimate.');
+          showToast('Routing API unreachable — check internet connection.', 'error');
+
+          /* Still plot S/D markers so the user isn\'t left with nothing */
+          if (srcMarker) map.removeLayer(srcMarker);
+          if (dstMarker) map.removeLayer(dstMarker);
+          srcMarker = L.marker([srcLat, srcLng], { icon: SRC_ICON }).addTo(map);
+          dstMarker = L.marker([dstLat, dstLng], { icon: DST_ICON }).addTo(map);
+          var fallbackDist = haversineKm(srcLat, srcLng, dstLat, dstLng);
+          routeLayer = L.polyline([[srcLat, srcLng], [dstLat, dstLng]], {
+            color: '#ffb703', weight: 3, opacity: .7, dashArray: '6 5'
+          }).addTo(map);
+          map.fitBounds(L.latLngBounds([[srcLat, srcLng], [dstLat, dstLng]]), { padding: [60, 60] });
+          showToast('Straight-line: ~' + fallbackDist.toFixed(1) + ' km', 'warning', 5000);
+        });
+    }
+
+    function clearRoute() {
+      ['src-lat', 'src-lng', 'dst-lat', 'dst-lng'].forEach(function (id) {
+        document.getElementById(id).value = '';
+      });
+      hideMessages();
+      document.getElementById('route-summary').classList.remove('show');
+      if (srcMarker) { map.removeLayer(srcMarker); srcMarker = null; }
+      if (dstMarker) { map.removeLayer(dstMarker); dstMarker = null; }
+      if (routeLayer) { map.removeLayer(routeLayer); routeLayer = null; }
+      clearDangerOverlays();
+      map.setView([20.5937, 78.9629], 5);
+      showToast('Route cleared.', 'info', 2500);
+    }
+
+    /* ANIMATED COUNTERS */
+    function animateCounter(el, target, suffix) {
+      var dur = 1600, start = performance.now();
+      function step(now) {
+        var p = Math.min((now - start) / dur, 1);
+        var e = 1 - Math.pow(1 - p, 3);
+        el.textContent = Math.floor(e * target).toLocaleString() + suffix;
+        if (p < 1) requestAnimationFrame(step);
+        else el.textContent = target.toLocaleString() + suffix;
+      }
+      requestAnimationFrame(step);
+    }
+    function initCounters() {
+      var obs = new IntersectionObserver(function (entries) {
+        entries.forEach(function (entry) {
+          if (entry.isIntersecting) {
+            var el = entry.target;
+            animateCounter(el, parseInt(el.dataset.count, 10), el.dataset.suffix || '');
+            obs.unobserve(el);
+          }
+        });
+      }, { threshold: 0.5 });
+      document.querySelectorAll('[data-count]').forEach(function (el) { obs.observe(el); });
+    }
+
+    /* GPS / LOCATE USER */
+    function locateUser(silent) {
+      if (!navigator.geolocation) {
+        showToast('Geolocation is not supported by your browser.', 'error');
+        return;
+      }
+
+      var btn = document.getElementById('btn-gps');
+      var loading = document.getElementById('map-loading');
+      var loadingText = document.getElementById('map-loading-text');
+
+      if (btn) btn.classList.add('locating');
+      if (loading && loadingText) {
+        loadingText.textContent = 'Getting your location\u2026';
+        loading.classList.add('show');
+      }
+
+      navigator.geolocation.getCurrentPosition(
+        function (pos) {
+          var lat = pos.coords.latitude;
+          var lng = pos.coords.longitude;
+          var acc = pos.coords.accuracy; // metres
+
+          if (btn) { btn.classList.remove('locating'); btn.classList.add('located'); }
+          if (loading) loading.classList.remove('show');
+
+          /* Remove old user-location layers */
+          if (userLocationMarker) map.removeLayer(userLocationMarker);
+          if (userAccCircle) map.removeLayer(userAccCircle);
+
+          /* Accuracy circle */
+          userAccCircle = L.circle([lat, lng], {
+            radius: acc,
+            color: '#4cc9f0',
+            fillColor: '#4cc9f0',
+            fillOpacity: 0.08,
+            weight: 1.5,
+            dashArray: '4 4',
+          }).addTo(map);
+
+          /* Animated user-location icon */
+          var userIconHtml =
+            '<div style="position:relative;width:24px;height:24px;">' +
+            '<div style="' +
+            'position:absolute;top:0;left:0;' +
+            'width:24px;height:24px;border-radius:50%;' +
+            'background:rgba(76,201,240,.25);border:1.5px solid #4cc9f0;' +
+            'animation:userPulse 1.8s ease-out infinite;' +
+            '"></div>' +
+            '<div style="' +
+            'position:absolute;top:50%;left:50%;' +
+            'transform:translate(-50%,-50%);' +
+            'width:12px;height:12px;border-radius:50%;' +
+            'background:#4cc9f0;border:2.5px solid #fff;' +
+            'box-shadow:0 0 10px #4cc9f0;' +
+            '"></div>' +
+            '</div>';
+
+          userLocationMarker = L.marker([lat, lng], {
+            icon: L.divIcon({
+              html: userIconHtml,
+              className: '',
+              iconSize: [24, 24],
+              iconAnchor: [12, 12],
+              popupAnchor: [0, -16],
+            }),
+            zIndexOffset: 1000,
+          }).addTo(map)
+            .bindPopup(
+              '<div class="zone-popup-title" style="color:#4cc9f0">&#128205; Your Location</div>' +
+              '<div class="zone-popup-desc">' +
+              'Latitude: ' + lat.toFixed(5) + '&deg;<br>' +
+              'Longitude: ' + lng.toFixed(5) + '&deg;<br>' +
+              'Accuracy: \u00b1' + Math.round(acc) + ' m' +
+              '</div>'
+            );
+
+          /* Zoom to user */
+          var zoomLevel = acc < 200 ? 15 : acc < 1000 ? 13 : acc < 5000 ? 11 : 9;
+          map.setView([lat, lng], zoomLevel, { animate: true });
+
+          /* Open popup only on manual click (not silent auto-locate) */
+          if (!silent) userLocationMarker.openPopup();
+
+          /* Check proximity to accident zones */
+          var nearby = ACCIDENT_ZONES.filter(function (z) {
+            return haversineKm(z.lat, z.lng, lat, lng) < 10;
+          });
+          if (!silent) {
+            if (nearby.length > 0) {
+              showToast('\u26a0 ' + nearby.length + ' accident zone(s) within 10 km of you!', 'warning', 6000);
+            } else {
+              showToast('\u2713 Location found. No danger zones within 10 km.', 'success');
+            }
+          } else {
+            /* auto-locate toast (quieter) */
+            showToast('\ud83d\udccd Your location detected on map.', 'info', 4000);
+          }
+        },
+        function (err) {
+          if (btn) btn.classList.remove('locating');
+          if (loading) loading.classList.remove('show');
+
+          var msgs = {
+            1: 'Location access denied. Please allow location in browser settings.',
+            2: 'Location unavailable. Check your GPS or network.',
+            3: 'Location request timed out. Please try again.',
+          };
+          if (!silent) showToast(msgs[err.code] || 'Could not get location.', 'error');
+        },
+        { enableHighAccuracy: true, timeout: 12000, maximumAge: 30000 }
+      );
+    }
+
+    /* INIT */
+    document.addEventListener('DOMContentLoaded', function () {
+      renderAlerts();
+      initMap();
+      initCounters();
+      /* Auto-detect user location on load (silent mode) */
+      locateUser(true);
+    });
+  </script>
+</body>
+
+</html>
