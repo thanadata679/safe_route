@@ -17,15 +17,15 @@
 /* ═══════════════════════════════════════════════════
    CONSTANTS
 ═══════════════════════════════════════════════════ */
-const MOBILE_REGEX     = /^[6-9]\d{9}$/;     // Valid Indian mobile (starts 6-9, 10 digits)
-const PW_UPPER_REGEX   = /[A-Z]/;
-const PW_LOWER_REGEX   = /[a-z]/;
-const PW_DIGIT_REGEX   = /\d/;
+const MOBILE_REGEX = /^[6-9]\d{9}$/;     // Valid Indian mobile (starts 6-9, 10 digits)
+const PW_UPPER_REGEX = /[A-Z]/;
+const PW_LOWER_REGEX = /[a-z]/;
+const PW_DIGIT_REGEX = /\d/;
 const PW_SPECIAL_REGEX = /[!@#$%^&*()\-_=+\[\]{};:'",.<>?\/\\|`~]/;
-const PW_MIN_LENGTH    = 6;
+const PW_MIN_LENGTH = 6;
 
 // Demo / seed credentials (replace with real backend auth in production)
-const DEMO_USER  = { mobile: '9876543210', password: 'User@1', name: 'Demo User' };
+const DEMO_USER = { mobile: '9876543210', password: 'User@1', name: 'Demo User' };
 const DEMO_ADMIN = { mobile: '9000000000', password: 'Admin@1', key: 'APZ-ADMIN-2024', name: 'Admin' };
 
 /* ═══════════════════════════════════════════════════
@@ -110,11 +110,11 @@ function validatePassword(value, msgId) {
     return false;
   }
   const missing = [];
-  if (value.length < PW_MIN_LENGTH)    missing.push(`at least ${PW_MIN_LENGTH} characters`);
-  if (!PW_UPPER_REGEX.test(value))     missing.push('one uppercase letter (A-Z)');
-  if (!PW_LOWER_REGEX.test(value))     missing.push('one lowercase letter (a-z)');
-  if (!PW_DIGIT_REGEX.test(value))     missing.push('one number (0-9)');
-  if (!PW_SPECIAL_REGEX.test(value))   missing.push('one special character (!@#…)');
+  if (value.length < PW_MIN_LENGTH) missing.push(`at least ${PW_MIN_LENGTH} characters`);
+  if (!PW_UPPER_REGEX.test(value)) missing.push('one uppercase letter (A-Z)');
+  if (!PW_LOWER_REGEX.test(value)) missing.push('one lowercase letter (a-z)');
+  if (!PW_DIGIT_REGEX.test(value)) missing.push('one number (0-9)');
+  if (!PW_SPECIAL_REGEX.test(value)) missing.push('one special character (!@#…)');
 
   if (missing.length) {
     setMsg(msgId, 'error', `Needs: ${missing.join(', ')}`);
@@ -129,20 +129,20 @@ function validatePassword(value, msgId) {
 ═══════════════════════════════════════════════════ */
 function scorePassword(pw) {
   let score = 0;
-  if (pw.length >= PW_MIN_LENGTH)    score++;
-  if (pw.length >= 10)               score++;
-  if (PW_UPPER_REGEX.test(pw))       score++;
-  if (PW_LOWER_REGEX.test(pw))       score++;
-  if (PW_DIGIT_REGEX.test(pw))       score++;
-  if (PW_SPECIAL_REGEX.test(pw))     score++;
-  if (score <= 2) return { cls: 'strength-weak',   label: 'Weak' };
-  if (score <= 3) return { cls: 'strength-fair',   label: 'Fair' };
-  if (score <= 4) return { cls: 'strength-good',   label: 'Good' };
-  return               { cls: 'strength-strong', label: 'Strong' };
+  if (pw.length >= PW_MIN_LENGTH) score++;
+  if (pw.length >= 10) score++;
+  if (PW_UPPER_REGEX.test(pw)) score++;
+  if (PW_LOWER_REGEX.test(pw)) score++;
+  if (PW_DIGIT_REGEX.test(pw)) score++;
+  if (PW_SPECIAL_REGEX.test(pw)) score++;
+  if (score <= 2) return { cls: 'strength-weak', label: 'Weak' };
+  if (score <= 3) return { cls: 'strength-fair', label: 'Fair' };
+  if (score <= 4) return { cls: 'strength-good', label: 'Good' };
+  return { cls: 'strength-strong', label: 'Strong' };
 }
 
 function updateStrength(inputId, meterId) {
-  const val  = $(inputId) ? $(inputId).value : '';
+  const val = $(inputId) ? $(inputId).value : '';
   const wrap = $(meterId);
   if (!wrap) return;
 
@@ -161,9 +161,9 @@ function updateStrength(inputId, meterId) {
 ═══════════════════════════════════════════════════ */
 const TOAST_ICONS = {
   success: `<svg viewBox="0 0 24 24" fill="none" stroke="#2dc653" stroke-width="2.5" width="20" height="20"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>`,
-  error:   `<svg viewBox="0 0 24 24" fill="none" stroke="#e63946" stroke-width="2.5" width="20" height="20"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>`,
+  error: `<svg viewBox="0 0 24 24" fill="none" stroke="#e63946" stroke-width="2.5" width="20" height="20"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>`,
   warning: `<svg viewBox="0 0 24 24" fill="none" stroke="#ffb703" stroke-width="2.5" width="20" height="20"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>`,
-  info:    `<svg viewBox="0 0 24 24" fill="none" stroke="#e85d04" stroke-width="2.5" width="20" height="20"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>`,
+  info: `<svg viewBox="0 0 24 24" fill="none" stroke="#e85d04" stroke-width="2.5" width="20" height="20"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>`,
 };
 
 function showToast(message, type = 'info', duration = 4000) {
@@ -204,7 +204,7 @@ function setupTogglePw(inputId, btnId) {
 
   btn.addEventListener('click', () => {
     const isVisible = inp.type === 'text';
-    inp.type     = isVisible ? 'password' : 'text';
+    inp.type = isVisible ? 'password' : 'text';
     btn.innerHTML = isVisible ? EYE_OPEN : EYE_CLOSED;
     btn.setAttribute('aria-label', isVisible ? 'Show password' : 'Hide password');
   });
@@ -257,7 +257,7 @@ function showRegisterPanel() {
   // Clear register form
   const form = $('register-form');
   if (form) form.reset();
-  ['val-reg-name','val-reg-mobile','val-reg-email','val-reg-password','val-reg-confirm'].forEach(clearMsg);
+  ['val-reg-name', 'val-reg-mobile', 'val-reg-email', 'val-reg-password', 'val-reg-confirm'].forEach(clearMsg);
   const str = $('reg-strength');
   if (str) str.className = 'pw-strength-wrap';
 }
@@ -277,7 +277,7 @@ function showLoginPanel() {
 function handleUserLogin(e) {
   e.preventDefault();
   const mobile = $('user-mobile').value.trim();
-  const pw     = $('user-password').value;
+  const pw = $('user-password').value;
 
   const mOk = validateMobile(mobile, 'val-user-mobile');
   const pOk = validatePassword(pw, 'val-user-password');
@@ -314,8 +314,8 @@ function handleUserLogin(e) {
 function handleAdminLogin(e) {
   e.preventDefault();
   const mobile = $('admin-mobile').value.trim();
-  const pw     = $('admin-password').value;
-  const key    = $('admin-key') ? $('admin-key').value.trim() : '';
+  const pw = $('admin-password').value;
+  const key = $('admin-key') ? $('admin-key').value.trim() : '';
 
   const mOk = validateMobile(mobile, 'val-admin-mobile');
   const pOk = validatePassword(pw, 'val-admin-password');
@@ -357,12 +357,12 @@ function handleAdminLogin(e) {
 function handleRegister(e) {
   e.preventDefault();
 
-  const name    = $('reg-name').value.trim();
-  const mobile  = $('reg-mobile').value.trim();
-  const email   = $('reg-email').value.trim();
-  const pw      = $('reg-password').value;
+  const name = $('reg-name').value.trim();
+  const mobile = $('reg-mobile').value.trim();
+  const email = $('reg-email').value.trim();
+  const pw = $('reg-password').value;
   const confirm = $('reg-confirm').value;
-  const terms   = $('reg-terms').checked;
+  const terms = $('reg-terms').checked;
 
   let valid = true;
 
@@ -434,7 +434,7 @@ function handleRegister(e) {
 
     // Reset form & switch to login
     $('register-form').reset();
-    ['val-reg-name','val-reg-mobile','val-reg-email','val-reg-password','val-reg-confirm'].forEach(clearMsg);
+    ['val-reg-name', 'val-reg-mobile', 'val-reg-email', 'val-reg-password', 'val-reg-confirm'].forEach(clearMsg);
     const str = $('reg-strength');
     if (str) str.className = 'pw-strength-wrap';
 
@@ -464,13 +464,13 @@ function setButtonLoading(btnId, isLoading) {
 ═══════════════════════════════════════════════════ */
 function animateCounter(el, target, suffix) {
   const duration = 1500;
-  const start    = performance.now();
+  const start = performance.now();
 
   function step(now) {
-    const elapsed  = now - start;
+    const elapsed = now - start;
     const progress = Math.min(elapsed / duration, 1);
     // ease-out
-    const eased    = 1 - Math.pow(1 - progress, 3);
+    const eased = 1 - Math.pow(1 - progress, 3);
     el.textContent = Math.floor(eased * target).toLocaleString() + suffix;
     if (progress < 1) requestAnimationFrame(step);
     else el.textContent = target.toLocaleString() + suffix;
@@ -485,7 +485,7 @@ function initCounters() {
   const observer = new IntersectionObserver(entries => {
     entries.forEach(entry => {
       if (entry.isIntersecting) {
-        const el     = entry.target;
+        const el = entry.target;
         const target = parseInt(el.dataset.count, 10);
         const suffix = el.dataset.suffix || '';
         animateCounter(el, target, suffix);
@@ -514,11 +514,11 @@ function attachLiveValidation() {
   });
 
   // User login
-  $('user-mobile')?.addEventListener('blur',  () => validateMobile($('user-mobile').value, 'val-user-mobile'));
+  $('user-mobile')?.addEventListener('blur', () => validateMobile($('user-mobile').value, 'val-user-mobile'));
   $('user-password')?.addEventListener('blur', () => validatePassword($('user-password').value, 'val-user-password'));
 
   // Admin login
-  $('admin-mobile')?.addEventListener('blur',  () => validateMobile($('admin-mobile').value, 'val-admin-mobile'));
+  $('admin-mobile')?.addEventListener('blur', () => validateMobile($('admin-mobile').value, 'val-admin-mobile'));
   $('admin-password')?.addEventListener('blur', () => validatePassword($('admin-password').value, 'val-admin-password'));
 
   // Register — name
@@ -533,24 +533,24 @@ function attachLiveValidation() {
 
   // Register — email
   $('reg-email')?.addEventListener('blur', () => {
-    const v  = $('reg-email').value.trim();
+    const v = $('reg-email').value.trim();
     const ok = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
-    if (!v)    setMsg('val-reg-email', 'error', 'Email is required');
+    if (!v) setMsg('val-reg-email', 'error', 'Email is required');
     else if (!ok) setMsg('val-reg-email', 'error', 'Invalid email format');
-    else           setMsg('val-reg-email', 'success', 'Valid email address');
+    else setMsg('val-reg-email', 'success', 'Valid email address');
   });
 
   // Register — password (real-time strength)
-  $('reg-password')?.addEventListener('input',  () => updateStrength('reg-password', 'reg-strength'));
-  $('reg-password')?.addEventListener('blur',   () => validatePassword($('reg-password').value, 'val-reg-password'));
+  $('reg-password')?.addEventListener('input', () => updateStrength('reg-password', 'reg-strength'));
+  $('reg-password')?.addEventListener('blur', () => validatePassword($('reg-password').value, 'val-reg-password'));
 
   // Register — confirm
   $('reg-confirm')?.addEventListener('blur', () => {
     const pw = $('reg-password').value;
     const cf = $('reg-confirm').value;
-    if (!cf)          setMsg('val-reg-confirm', 'error', 'Confirm your password');
+    if (!cf) setMsg('val-reg-confirm', 'error', 'Confirm your password');
     else if (pw !== cf) setMsg('val-reg-confirm', 'error', 'Passwords do not match');
-    else                setMsg('val-reg-confirm', 'success', 'Passwords match ✓');
+    else setMsg('val-reg-confirm', 'success', 'Passwords match ✓');
   });
 }
 
@@ -568,19 +568,19 @@ document.addEventListener('DOMContentLoaded', () => {
   $('switch-to-user-link')?.addEventListener('click', e => { e.preventDefault(); switchTab('user'); });
 
   // Form submissions
-  $('user-login-form')?.addEventListener('submit',  handleUserLogin);
+  $('user-login-form')?.addEventListener('submit', handleUserLogin);
   $('admin-login-form')?.addEventListener('submit', handleAdminLogin);
-  $('register-form')?.addEventListener('submit',    handleRegister);
+  $('register-form')?.addEventListener('submit', handleRegister);
 
   // Panel navigation
   $('show-register-link')?.addEventListener('click', e => { e.preventDefault(); showRegisterPanel(); });
-  $('show-login-link')?.addEventListener('click',    e => { e.preventDefault(); showLoginPanel(); });
+  $('show-login-link')?.addEventListener('click', e => { e.preventDefault(); showLoginPanel(); });
 
   // Password visibility toggles
-  setupTogglePw('user-password',  'toggle-user-pw');
+  setupTogglePw('user-password', 'toggle-user-pw');
   setupTogglePw('admin-password', 'toggle-admin-pw');
-  setupTogglePw('reg-password',   'toggle-reg-pw');
-  setupTogglePw('reg-confirm',    'toggle-reg-confirm');
+  setupTogglePw('reg-password', 'toggle-reg-pw');
+  setupTogglePw('reg-confirm', 'toggle-reg-confirm');
 
   // Live validation
   attachLiveValidation();
