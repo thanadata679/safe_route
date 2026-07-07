@@ -1,0 +1,8 @@
+{
+  "name": "safe_route_frontend",
+  "version": "1.0.0",
+  "description": "Frontend static server configuration for SafeRoute",
+  "scripts": {
+    "dev": "npx -y http-server -p 3001"
+  }
+}
