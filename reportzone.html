@@ -1,0 +1,880 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SafeRoute — Report Accident Prone Zone</title>
+  <meta name="description" content="Report new accident-prone zones or hotspots on SafeRoute. Select locations via map click or GPS." />
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
+  <style>
+    /* =============================================
+       CSS CUSTOM PROPERTIES
+    ============================================= */
+    :root {
+      --primary:        #e85d04;
+      --primary-light:  #fb8500;
+      --primary-dark:   #c44b02;
+      --accent:         #0077b6;
+      --accent-light:   #00b4d8;
+      --success:        #2dc653;
+      --danger:         #e63946;
+      --warning:        #ffb703;
+      --info:           #4cc9f0;
+
+      --bg-page:        #0f1117;
+      --bg-card:        #1a1d27;
+      --bg-card-2:      #20242f;
+      --bg-input:       #252937;
+      --bg-nav:         rgba(15,17,23,0.96);
+
+      --text-primary:   #f0f2f5;
+      --text-secondary: #a0aec0;
+      --text-muted:     #6b7280;
+
+      --border:         rgba(255,255,255,.07);
+      --border-focus:   #e85d04;
+      --glow-orange:    0 0 20px rgba(232,93,4,.3);
+      --glow-red:       0 0 20px rgba(230,57,70,.3);
+
+      --radius-sm:      8px;
+      --radius-md:      14px;
+      --radius-lg:      20px;
+      --radius-xl:      28px;
+      --radius-full:    9999px;
+
+      --shadow-md:      0 8px 30px rgba(0,0,0,.4);
+      --shadow-lg:      0 20px 60px rgba(0,0,0,.5);
+      --transition:     all .25s cubic-bezier(.4,0,.2,1);
+      --font-base:      'Inter', sans-serif;
+      --font-display:   'Poppins', sans-serif;
+      --nav-h:          66px;
+    }
+
+    /* =============================================
+       RESET & BASE
+    ============================================= */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: var(--font-base);
+      background: var(--bg-page);
+      color: var(--text-primary);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    body::before {
+      content: '';
+      position: fixed; inset: 0;
+      background-image:
+        linear-gradient(rgba(232,93,4,.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(232,93,4,.03) 1px, transparent 1px);
+      background-size: 40px 40px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* =============================================
+       NAVIGATION BAR
+    ============================================= */
+    .navbar {
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+      background: var(--bg-nav);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--border);
+      height: var(--nav-h);
+      display: flex;
+      align-items: center;
+      padding: 0 28px;
+      gap: 16px;
+    }
+
+    .nav-brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      text-decoration: none;
+      flex-shrink: 0;
+    }
+    .nav-logo {
+      width: 42px; height: 42px;
+      border-radius: var(--radius-sm);
+      background: linear-gradient(135deg, var(--primary), var(--primary-light));
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: var(--glow-orange);
+      flex-shrink: 0;
+    }
+    .nav-logo svg { width: 22px; height: 22px; fill: #fff; }
+    .nav-brand-text .brand-name {
+      font-family: var(--font-display);
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      line-height: 1.1;
+    }
+    .nav-brand-text .brand-sub {
+      font-size: .64rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: .06em;
+    }
+
+    .nav-divider {
+      width: 1px;
+      height: 32px;
+      background: var(--border);
+      margin: 0 4px;
+    }
+
+    .nav-spacer { flex: 1; }
+
+    .btn-back {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 9px 16px;
+      background: rgba(255,255,255,.06);
+      border: 1px solid rgba(255,255,255,.12);
+      border-radius: var(--radius-sm);
+      color: var(--text-primary);
+      font-family: var(--font-base);
+      font-size: .82rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: var(--transition);
+      text-decoration: none;
+      white-space: nowrap;
+    }
+    .btn-back:hover {
+      background: rgba(255,255,255,.12);
+      border-color: rgba(255,255,255,.2);
+      transform: translateY(-1px);
+    }
+    .btn-back svg { width: 14px; height: 14px; }
+
+    /* =============================================
+       MAIN CONTENT LAYOUT
+    ============================================= */
+    .page-content {
+      position: relative;
+      z-index: 1;
+      padding: 24px 28px;
+      display: grid;
+      grid-template-columns: 460px 1fr;
+      gap: 24px;
+      max-width: 1800px;
+      margin: 0 auto;
+    }
+
+    /* =============================================
+       PANEL CARDS
+    ============================================= */
+    .panel-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      box-shadow: var(--shadow-md);
+      display: flex;
+      flex-direction: column;
+    }
+    .panel-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 16px 22px;
+      border-bottom: 1px solid var(--border);
+      background: var(--bg-card-2);
+    }
+    .panel-header-icon {
+      width: 34px; height: 34px;
+      border-radius: var(--radius-sm);
+      display: flex; align-items: center; justify-content: center;
+      background: rgba(232,93,4,.15);
+      color: var(--primary-light);
+      flex-shrink: 0;
+    }
+    .panel-header-icon svg { width: 17px; height: 17px; }
+    .panel-title {
+      font-family: var(--font-display);
+      font-size: .95rem;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+    .panel-subtitle {
+      font-size: .72rem;
+      color: var(--text-muted);
+      margin-top: 1px;
+    }
+
+    /* =============================================
+       FORM DETAILS
+    ============================================= */
+    .form-body {
+      padding: 22px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    .form-label {
+      font-size: .75rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: .04em;
+    }
+    .form-input {
+      width: 100%;
+      padding: 10px 14px;
+      background: var(--bg-input);
+      border: 1.5px solid rgba(255,255,255,.1);
+      border-radius: var(--radius-sm);
+      color: var(--text-primary);
+      font-family: var(--font-base);
+      font-size: .84rem;
+      outline: none;
+      transition: var(--transition);
+    }
+    .form-input::placeholder { color: var(--text-muted); }
+    .form-input:focus {
+      border-color: var(--border-focus);
+      background: #2a2e3e;
+      box-shadow: 0 0 0 3px rgba(232,93,4,.15);
+    }
+    .form-input:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      background: rgba(255,255,255,.02);
+    }
+
+    select.form-input {
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23a0aec0' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 12px center;
+      padding-right: 36px;
+    }
+
+    /* Submitter metadata box */
+    .reporter-box {
+      background: rgba(0,119,182,.08);
+      border: 1px solid rgba(0,119,182,.15);
+      border-radius: var(--radius-sm);
+      padding: 10px 14px;
+      font-size: .75rem;
+      color: var(--accent-light);
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .reporter-box span { font-weight: 600; color: var(--text-primary); }
+
+    .btn-submit {
+      width: 100%;
+      padding: 12px;
+      background: linear-gradient(135deg, var(--primary), var(--primary-light));
+      border: none;
+      border-radius: var(--radius-sm);
+      color: #fff;
+      font-family: var(--font-display);
+      font-size: .86rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: var(--transition);
+      box-shadow: var(--glow-orange);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+    .btn-submit:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 22px rgba(232,93,4,.45);
+    }
+    .btn-submit svg { width: 16px; height: 16px; }
+
+    /* =============================================
+       RIGHT PANEL (MAP + RECENT REPORTS)
+    ============================================= */
+    .right-panel {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    #map {
+      width: 100%;
+      height: 480px;
+    }
+
+    /* Map info banner */
+    .map-hint {
+      padding: 10px 16px;
+      background: var(--bg-card-2);
+      border-top: 1px solid var(--border);
+      font-size: .75rem;
+      color: var(--text-secondary);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .map-hint svg { width: 14px; height: 14px; color: var(--warning); }
+
+    /* Recent submissions table */
+    .recent-reports {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+    }
+    .reports-table-container {
+      max-height: 220px;
+      overflow-y: auto;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: .78rem;
+      text-align: left;
+    }
+    th {
+      background: var(--bg-card-2);
+      color: var(--text-secondary);
+      font-weight: 600;
+      padding: 10px 16px;
+      border-bottom: 1px solid var(--border);
+    }
+    td {
+      padding: 10px 16px;
+      border-bottom: 1px solid var(--border);
+      color: var(--text-primary);
+    }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: rgba(255,255,255,.01); }
+
+    .badge {
+      font-size: .66rem;
+      font-weight: 700;
+      padding: 2px 7px;
+      border-radius: var(--radius-full);
+      text-transform: uppercase;
+    }
+    .badge.high   { background: rgba(230,57,70,.15); color: var(--danger); }
+    .badge.medium { background: rgba(255,183,3,.15);  color: var(--warning); }
+    .badge.low    { background: rgba(45,198,83,.15);  color: var(--success); }
+
+    /* Map loading state overlay */
+    .map-loading {
+      position: absolute; inset: 0;
+      background: rgba(15,17,23,.7);
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      gap: 14px; z-index: 800;
+      pointer-events: none; opacity: 0;
+      transition: opacity .3s;
+    }
+    .map-loading.show { opacity: 1; pointer-events: all; }
+    .map-spinner {
+      width: 32px; height: 32px;
+      border: 3px solid rgba(232,93,4,.2);
+      border-top-color: var(--primary);
+      border-radius: 50%;
+      animation: spin .8s linear infinite;
+    }
+    .map-loading-text { font-size: .8rem; color: var(--text-secondary); }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* =============================================
+       TOAST NOTIFICATIONS
+    ============================================= */
+    #toast-container {
+      position: fixed;
+      top: 80px; right: 22px;
+      z-index: 9999;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      pointer-events: none;
+    }
+    .toast {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 13px 18px;
+      border-radius: var(--radius-md);
+      background: var(--bg-card);
+      box-shadow: 0 8px 30px rgba(0,0,0,.5);
+      font-size: .83rem;
+      font-weight: 500;
+      color: var(--text-primary);
+      min-width: 260px;
+      max-width: 340px;
+      border: 1px solid var(--border);
+      border-left: 4px solid var(--primary);
+      pointer-events: all;
+      animation: toastIn .4s cubic-bezier(.22,1,.36,1) both;
+    }
+    .toast.success { border-left-color: var(--success); }
+    .toast.error   { border-left-color: var(--danger); }
+    .toast.warning { border-left-color: var(--warning); }
+    .toast.fade-out{ animation: toastOut .35s ease forwards; }
+    @keyframes toastIn  { from { opacity:0; transform:translateX(40px); } to { opacity:1; transform:translateX(0); } }
+    @keyframes toastOut { to   { opacity:0; transform:translateX(40px); } }
+
+    /* Responsive */
+    @media (max-width: 992px) {
+      .page-content { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<div id="toast-container" aria-live="polite"></div>
+
+<!-- NAVIGATION BAR -->
+<nav class="navbar" role="navigation" aria-label="Main navigation">
+  <a class="nav-brand" href="index.html" aria-label="SafeRoute Home">
+    <div class="nav-logo" aria-hidden="true">
+      <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+        <path d="M12 2L3 6v6c0 5.25 3.75 10.15 9 11.35C17.25 22.15 21 17.25 21 12V6L12 2z"/>
+      </svg>
+    </div>
+    <div class="nav-brand-text">
+      <div class="brand-name">SafeRoute</div>
+      <div class="brand-sub">Accident Prone Zone Alert</div>
+    </div>
+  </a>
+
+  <div class="nav-divider" aria-hidden="true"></div>
+
+  <div class="nav-spacer"></div>
+
+  <!-- Go back dashboard -->
+  <a href="index.html" class="btn-back" aria-label="Back to dashboard">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+      <polyline points="15 18 9 12 15 6"/>
+    </svg>
+    Back to Dashboard
+  </a>
+</nav>
+
+<!-- MAIN PAGE CONTENT -->
+<main class="page-content" role="main">
+
+  <!-- LEFT: REPORT FORM -->
+  <section class="panel-card" aria-label="Report Form Details">
+    <div class="panel-header">
+      <div class="panel-header-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+          <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/>
+          <path d="M18.5 2.5a2.121 2.121 0 113 3L12 15l-4 1 1-4 9.5-9.5z"/>
+        </svg>
+      </div>
+      <div>
+        <div class="panel-title">Report New Prone Zone</div>
+        <div class="panel-subtitle">Fill location details or click on the map</div>
+      </div>
+    </div>
+
+    <form id="report-form" class="form-body" onsubmit="submitReport(event)">
+      <!-- Name of place -->
+      <div class="form-group">
+        <label class="form-label" for="zone-name">Name of the Place *</label>
+        <input type="text" id="zone-name" class="form-input" placeholder="e.g. Silk Board Junction" required />
+      </div>
+
+      <!-- State & District -->
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label" for="zone-district">District / County *</label>
+          <input type="text" id="zone-district" class="form-input" placeholder="e.g. Bengaluru" required />
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="zone-state">State *</label>
+          <input type="text" id="zone-state" class="form-input" placeholder="e.g. Karnataka" required />
+        </div>
+      </div>
+
+      <!-- Pincode -->
+      <div class="form-group">
+        <label class="form-label" for="zone-pincode">Pincode *</label>
+        <input type="text" id="zone-pincode" class="form-input" placeholder="e.g. 560068" maxlength="6" required />
+      </div>
+
+      <!-- Lat & Lng -->
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label" for="zone-lat">Latitude *</label>
+          <input type="number" id="zone-lat" class="form-input" placeholder="e.g. 12.9716" step="any" required />
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="zone-lng">Longitude *</label>
+          <input type="number" id="zone-lng" class="form-input" placeholder="e.g. 77.5946" step="any" required />
+        </div>
+      </div>
+
+      <!-- Dangerous level & Speed limit -->
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label" for="zone-level">Dangerous Level *</label>
+          <select id="zone-level" class="form-input" required>
+            <option value="high">High Risk</option>
+            <option value="medium">Medium Risk</option>
+            <option value="low">Low Risk</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="zone-speed">Speed Limit (km/h) *</label>
+          <input type="number" id="zone-speed" class="form-input" placeholder="e.g. 40" min="10" max="120" required />
+        </div>
+      </div>
+
+      <!-- Automatic reporter info -->
+      <div class="reporter-box" id="reporter-info">
+        <div>Reporter: <span id="info-username">Guest User</span></div>
+        <div>Time of Reporting: <span id="info-time">-</span></div>
+      </div>
+
+      <!-- Submit button -->
+      <button type="submit" class="btn-submit">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+        </svg>
+        Register Danger Zone
+      </button>
+    </form>
+  </section>
+
+  <!-- RIGHT: MAP & RECENT REPORTS -->
+  <section class="right-panel" aria-label="Interactive Map and Recently Reported">
+    
+    <!-- Map panel -->
+    <div class="panel-card">
+      <div class="panel-header">
+        <div class="panel-header-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+            <polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/>
+          </svg>
+        </div>
+        <div>
+          <div class="panel-title">Location Picker Map</div>
+          <div class="panel-subtitle">Click anywhere to load local address and coordinates</div>
+        </div>
+      </div>
+
+      <div style="position:relative;">
+        <div id="map"></div>
+        <div class="map-loading" id="map-loading" aria-live="polite">
+          <div class="map-spinner" aria-hidden="true"></div>
+          <div class="map-loading-text" id="map-loading-text">Fetching location details…</div>
+        </div>
+      </div>
+
+      <div class="map-hint">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+        Hint: Click anywhere on the map or allow GPS to automatically fetch address, state, district, and pincode.
+      </div>
+    </div>
+
+    <!-- Recent reports list -->
+    <div class="recent-reports">
+      <div class="panel-header">
+        <div class="panel-header-icon" aria-hidden="true" style="background:rgba(0,180,216,.15);color:var(--accent-light);">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+            <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/>
+          </svg>
+        </div>
+        <div>
+          <div class="panel-title">Recently Reported Hotspots</div>
+          <div class="panel-subtitle">New accident zones added by users</div>
+        </div>
+      </div>
+      <div class="reports-table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>Place Name</th>
+              <th>State / Dist.</th>
+              <th>Level</th>
+              <th>Speed Limit</th>
+              <th>By</th>
+            </tr>
+          </thead>
+          <tbody id="recent-reports-list">
+            <!-- Dynamically populated -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </section>
+
+</main>
+
+<!-- Leaflet JS -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<script>
+'use strict';
+
+/* Global references */
+var map, selectMarker = null, reporterName = "Guest User";
+var customZones = [];
+
+/* SESSION CHECK */
+(function initUser() {
+  try {
+    const raw = sessionStorage.getItem('apz_session');
+    if (!raw) return;
+    const s = JSON.parse(raw);
+    if (s.name) {
+      reporterName = s.name;
+      document.getElementById('info-username').textContent = s.name + ' (' + (s.role || 'user') + ')';
+    }
+  } catch (_) {}
+  
+  // Set real-time timestamp
+  updateTimestamp();
+})();
+
+function updateTimestamp() {
+  var now = new Date();
+  document.getElementById('info-time').textContent = now.toLocaleDateString() + ' ' + now.toLocaleTimeString();
+}
+
+/* TOAST SYSTEM */
+const TOAST_ICONS = {
+  success: '<svg viewBox="0 0 24 24" fill="none" stroke="#2dc653" stroke-width="2.5" width="18" height="18"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>',
+  error:   '<svg viewBox="0 0 24 24" fill="none" stroke="#e63946" stroke-width="2.5" width="18" height="18"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>',
+  warning: '<svg viewBox="0 0 24 24" fill="none" stroke="#ffb703" stroke-width="2.5" width="18" height="18"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>',
+  info:    '<svg viewBox="0 0 24 24" fill="none" stroke="#e85d04" stroke-width="2.5" width="18" height="18"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>',
+};
+
+function showToast(message, type) {
+  type = type || 'info';
+  const c = document.getElementById('toast-container');
+  if (!c) return;
+  const t = document.createElement('div');
+  t.className = 'toast ' + type;
+  t.innerHTML = (TOAST_ICONS[type] || TOAST_ICONS.info) + '<span>' + message + '</span>';
+  c.appendChild(t);
+  setTimeout(() => {
+    t.classList.add('fade-out');
+    t.addEventListener('animationend', () => t.remove(), { once: true });
+  }, 4000);
+}
+
+/* =============================================
+   MAP INITIALISATION
+============================================= */
+var SELECT_ICON = L.divIcon({
+  html: '<svg xmlns="http://www.w3.org/2000/svg" width="32" height="40" viewBox="0 0 32 40">' +
+        '<circle cx="16" cy="16" r="12" fill="#00b4d8" opacity="0.9"/>' +
+        '<circle cx="16" cy="16" r="8" fill="#00b4d8" stroke="#fff" stroke-width="2"/>' +
+        '<path d="M16 10v4M16 18h.01" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/>' +
+        '<polygon points="16,36 10,26 22,26" fill="#00b4d8"/>' +
+        '</svg>',
+  className: '', iconSize: [32, 40], iconAnchor: [16, 40], popupAnchor: [0, -42]
+});
+
+function initMap() {
+  map = L.map('map', { center: [20.5937, 78.9629], zoom: 5 });
+
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+    attribution: '&copy; OpenStreetMap contributors &copy; CARTO',
+    subdomains: 'abcd',
+    maxZoom: 19,
+  }).addTo(map);
+
+  /* Map click handler */
+  map.on('click', function(e) {
+    updateMarker(e.latlng.lat, e.latlng.lng);
+  });
+
+  /* Try to auto-locate user on start */
+  locateUser();
+}
+
+function locateUser() {
+  if (!navigator.geolocation) {
+    showToast('Geolocation is not supported by your browser.', 'error');
+    return;
+  }
+
+  var loading = document.getElementById('map-loading');
+  if (loading) loading.classList.add('show');
+
+  navigator.geolocation.getCurrentPosition(
+    function(pos) {
+      var lat = pos.coords.latitude;
+      var lng = pos.coords.longitude;
+      map.setView([lat, lng], 13);
+      updateMarker(lat, lng);
+    },
+    function(err) {
+      if (loading) loading.classList.remove('show');
+      showToast('Could not automatically determine your location. Click map to set coordinates.', 'warning');
+    },
+    { timeout: 10000 }
+  );
+}
+
+/* =============================================
+   REVERSE GEOCODING (OSM Nominatim API)
+============================================= */
+function updateMarker(lat, lng) {
+  document.getElementById('zone-lat').value = lat.toFixed(6);
+  document.getElementById('zone-lng').value = lng.toFixed(6);
+
+  if (selectMarker) {
+    selectMarker.setLatLng([lat, lng]);
+  } else {
+    selectMarker = L.marker([lat, lng], { icon: SELECT_ICON }).addTo(map);
+  }
+
+  reverseGeocode(lat, lng);
+}
+
+function reverseGeocode(lat, lng) {
+  var loading = document.getElementById('map-loading');
+  if (loading) loading.classList.add('show');
+
+  var url = 'https://nominatim.openstreetmap.org/reverse?format=json&lat=' + lat + '&lon=' + lng + '&zoom=18&addressdetails=1';
+
+  fetch(url)
+    .then(function(res) { return res.json(); })
+    .then(function(data) {
+      if (loading) loading.classList.remove('show');
+      
+      var addr = data.address || {};
+      
+      // Determine the place name
+      var place = addr.suburb || addr.neighbourhood || addr.village || addr.road || addr.county || 'Unnamed Hotspot';
+      
+      document.getElementById('zone-name').value = place;
+      document.getElementById('zone-state').value = addr.state || '';
+      document.getElementById('zone-district').value = addr.county || addr.district || addr.city || '';
+      document.getElementById('zone-pincode').value = addr.postcode || '';
+
+      updateTimestamp();
+      showToast('Address details filled from map click.', 'success');
+    })
+    .catch(function() {
+      if (loading) loading.classList.remove('show');
+      showToast('Reverse address lookup failed. Please fill manually.', 'info');
+    });
+}
+
+/* =============================================
+   FORM SUBMISSION & PERSISTENCE
+============================================= */
+function loadCustomReports() {
+  try {
+    customZones = JSON.parse(localStorage.getItem('apz_reported_zones') || '[]');
+  } catch (e) {
+    customZones = [];
+  }
+  renderRecentReports();
+}
+
+function renderRecentReports() {
+  var list = document.getElementById('recent-reports-list');
+  if (!list) return;
+
+  if (customZones.length === 0) {
+    list.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--text-muted);">No accident prone zones reported yet.</td></tr>';
+    return;
+  }
+
+  list.innerHTML = customZones.map(function(z) {
+    return '<tr>' +
+      '<td>' + z.name + '</td>' +
+      '<td>' + z.state + ' / ' + z.district + '</td>' +
+      '<td><span class="badge ' + z.level + '">' + z.level + '</span></td>' +
+      '<td>' + z.speed + ' km/h</td>' +
+      '<td>' + z.reporter + '</td>' +
+      '</tr>';
+  }).reverse().join(''); // Show latest on top
+}
+
+function submitReport(e) {
+  e.preventDefault();
+
+  var name = document.getElementById('zone-name').value.trim();
+  var state = document.getElementById('zone-state').value.trim();
+  var district = document.getElementById('zone-district').value.trim();
+  var pincode = document.getElementById('zone-pincode').value.trim();
+  var lat = parseFloat(document.getElementById('zone-lat').value);
+  var lng = parseFloat(document.getElementById('zone-lng').value);
+  var level = document.getElementById('zone-level').value;
+  var speed = parseInt(document.getElementById('zone-speed').value, 10);
+
+  if (!name || !state || !district || !pincode || isNaN(lat) || isNaN(lng) || isNaN(speed)) {
+    showToast('Please fill all required fields correctly.', 'error');
+    return;
+  }
+
+  var newReport = {
+    id: 'custom-' + Date.now(),
+    name: name,
+    state: state,
+    district: district,
+    pincode: pincode,
+    lat: lat,
+    lng: lng,
+    level: level,
+    speed: speed,
+    reporter: reporterName,
+    time: new Date().toISOString()
+  };
+
+  customZones.push(newReport);
+  localStorage.setItem('apz_reported_zones', JSON.stringify(customZones));
+
+  showToast('Accident Prone Zone registered successfully!', 'success');
+
+  // Reset form except lat/lng
+  document.getElementById('zone-name').value = '';
+  document.getElementById('zone-state').value = '';
+  document.getElementById('zone-district').value = '';
+  document.getElementById('zone-pincode').value = '';
+  document.getElementById('zone-speed').value = '';
+
+  renderRecentReports();
+
+  // Redirect back to index page after a short delay
+  setTimeout(function() {
+    window.location.href = 'index.html';
+  }, 1800);
+}
+
+/* INIT ON LOAD */
+document.addEventListener('DOMContentLoaded', function() {
+  initMap();
+  loadCustomReports();
+});
+</script>
+</body>
+</html>

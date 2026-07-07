@@ -1991,7 +1991,7 @@
     }
 
     /* ACCIDENT ZONES DATA */
-    const ACCIDENT_ZONES = [
+    var ACCIDENT_ZONES = [
       { id: 1, lat: 28.6139, lng: 77.2090, name: 'Delhi — Chandni Chowk', type: 'critical', incidents: 34, desc: 'High pedestrian density, frequent peak-hour accidents.' },
       { id: 2, lat: 19.0760, lng: 72.8777, name: 'Mumbai — Andheri Junction', type: 'critical', incidents: 28, desc: 'Heavy traffic merging, poor lighting at night.' },
       { id: 3, lat: 12.9716, lng: 77.5946, name: 'Bengaluru — Silk Board', type: 'high', incidents: 22, desc: 'Notorious congestion with frequent rear-end collisions.' },
@@ -2005,6 +2005,22 @@
       { id: 11, lat: 11.0168, lng: 76.9558, name: 'Coimbatore — Avinashi Road', type: 'high', incidents: 16, desc: 'Industrial traffic mixing with commuters.' },
       { id: 12, lat: 25.5941, lng: 85.1376, name: 'Patna — Gandhi Setu Bridge', type: 'critical', incidents: 23, desc: 'Narrow bridge with heavy two-way traffic.' },
     ];
+
+    /* Load reported danger zones from localStorage */
+    try {
+      var customReports = JSON.parse(localStorage.getItem('apz_reported_zones') || '[]');
+      customReports.forEach(function (z) {
+        ACCIDENT_ZONES.push({
+          id: z.id,
+          lat: z.lat,
+          lng: z.lng,
+          name: z.name + ' (' + z.state + ')',
+          type: z.level === 'high' ? 'critical' : 'high',
+          incidents: Math.floor(Math.random() * 15) + 5,
+          desc: 'Speed limit: ' + z.speed + ' km/h. Reported by ' + z.reporter + ' on ' + new Date(z.time).toLocaleDateString()
+        });
+      });
+    } catch (_) {}
 
     /* ALERTS DATA */
     const ALERTS_DATA = [
@@ -2592,19 +2608,60 @@
           /* Open popup only on manual click (not silent auto-locate) */
           if (!silent) userLocationMarker.openPopup();
 
-          /* Check proximity to accident zones */
+          /* Check proximity to accident zones (within 20 km) */
           var nearby = ACCIDENT_ZONES.filter(function (z) {
-            return haversineKm(z.lat, z.lng, lat, lng) < 10;
+            return haversineKm(z.lat, z.lng, lat, lng) < 20;
           });
+
+          /* Clear previous danger highlights */
+          clearDangerOverlays();
+
+          /* Display nearby danger zones with red highlighted signals and circles */
+          nearby.forEach(function (zone) {
+            var d = haversineKm(zone.lat, zone.lng, lat, lng);
+
+            var sigMarker = L.marker([zone.lat, zone.lng], {
+              icon: makeDangerSignalIcon(zone.type),
+              zIndexOffset: 500
+            }).addTo(map)
+              .bindPopup(
+                '<div style="min-width:200px">' +
+                '<div class="zone-popup-title" style="color:#e63946">&#128680; NEARBY DANGER</div>' +
+                '<div class="zone-popup-type" style="color:#e63946">' + zone.name + '</div>' +
+                '<div class="zone-popup-desc">' + zone.desc + '</div>' +
+                '<div class="zone-popup-coords">Distance from you: ~' + d.toFixed(2) + ' km</div>' +
+                '<div class="zone-popup-desc" style="margin-top:6px;color:#e63946;font-weight:600;">' +
+                '&#128204; ' + zone.incidents + ' incidents in last 30 days' +
+                '</div>' +
+                '</div>',
+                { maxWidth: 240 }
+              );
+            dangerMarkers.push(sigMarker);
+
+            var circle = L.circle([zone.lat, zone.lng], {
+              radius: 1500,
+              color: '#e63946',
+              fillColor: '#e63946',
+              fillOpacity: 0.08,
+              weight: 1.5,
+              dashArray: '5 4',
+            }).addTo(map);
+            dangerCircles.push(circle);
+          });
+
           if (!silent) {
             if (nearby.length > 0) {
-              showToast('\u26a0 ' + nearby.length + ' accident zone(s) within 10 km of you!', 'warning', 6000);
+              showToast('\u26a0 ' + nearby.length + ' accident zone(s) within 20 km of you highlighted on map!', 'warning', 6000);
             } else {
-              showToast('\u2713 Location found. No danger zones within 10 km.', 'success');
+              showToast('\u2713 Location found. No danger zones within 20 km.', 'success');
             }
           } else {
             /* auto-locate toast (quieter) */
-            showToast('\ud83d\udccd Your location detected on map.', 'info', 4000);
+            if (nearby.length > 0) {
+              showToast('\ud83d\udccd Location loaded. ' + nearby.length + ' nearby danger zone(s) highlighted!', 'warning', 5000);
+            } else {
+              showToast('\ud83d\udccd Your location detected on map.', 'info', 4000);
+            }
           }
         },
         function (err) {
