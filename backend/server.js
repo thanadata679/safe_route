@@ -154,6 +154,53 @@ app.post('/api/auth/login', async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
+// DELETE an accident zone by ID
+app.delete('/api/accident-zone/:id', async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const { data, error } = await supabase
+      .from('accident_zones')
+      .delete()
+      .eq('id', id)
+      .select();
+
+    if (error) throw error;
+    res.json({ message: "Accident zone deleted successfully", data });
+  } catch (error) {
+    console.error("Database delete error:", error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// PUT (update) an accident zone by ID
+app.put('/api/accident-zone/:id', async (req, res) => {
+  const { id } = req.params;
+  const { name, state, district, pincode, latitude, longitude, danger_level, speed_limit } = req.body;
+
+  try {
+    const { data, error } = await supabase
+      .from('accident_zones')
+      .update({
+        name,
+        state,
+        district,
+        pincode,
+        latitude: parseFloat(latitude),
+        longitude: parseFloat(longitude),
+        danger_level,
+        speed_limit: parseInt(speed_limit, 10)
+      })
+      .eq('id', id)
+      .select();
+
+    if (error) throw error;
+    res.json({ message: "Accident zone updated successfully", data });
+  } catch (error) {
+    console.error("Database update error:", error);
+    res.status(500).json({ error: error.message });
+  }
+});
 
 app.listen(PORT, () => {
   console.log(`Backend Express API running on http://localhost:${PORT}`);

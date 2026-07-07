@@ -378,7 +378,7 @@ async function handleAdminLogin(e) {
     }));
 
     showToast('Admin authenticated! Loading admin dashboard…', 'success');
-    setTimeout(() => { window.location.href = 'index.html'; }, 1500);
+    setTimeout(() => { window.location.href = 'adminpanel.html'; }, 1500);
 
   } catch (err) {
     console.warn("Backend admin login failed, trying local fallback:", err);
@@ -387,7 +387,7 @@ async function handleAdminLogin(e) {
         name: DEMO_ADMIN.name, mobile, role: 'admin', ts: Date.now()
       }));
       showToast('Admin authenticated! (Offline mode) Loading dashboard…', 'success');
-      setTimeout(() => { window.location.href = 'index.html'; }, 1500);
+      setTimeout(() => { window.location.href = 'adminpanel.html'; }, 1500);
     } else {
       showToast(err.message || 'Invalid admin credentials.', 'error');
       setMsg('val-admin-mobile', 'error', 'Admin credentials not recognized');
