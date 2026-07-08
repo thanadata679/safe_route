@@ -1547,6 +1547,16 @@
 
     <div class="nav-divider" aria-hidden="true"></div>
 
+    <a href="adminpanel.html" class="btn-admin" id="btn-admin-portal" style="display: none; background: rgba(251, 133, 0, 0.15); border: 1.5px solid rgba(251, 133, 0, 0.4); color: #fb8500; font-weight: 600; padding: 10px 16px; border-radius: var(--radius-sm); text-decoration: none; align-items: center; gap: 7px; font-size: .83rem;" aria-label="Admin panel">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" width="15" height="15">
+        <rect x="3" y="3" width="7" height="9" />
+        <rect x="14" y="3" width="7" height="5" />
+        <rect x="14" y="12" width="7" height="9" />
+        <rect x="3" y="16" width="7" height="5" />
+      </svg>
+      Admin Panel
+    </a>
+
     <a href="reportzone.html" class="btn-report" id="btn-report-zone" aria-label="Report accident prone zone">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
         <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
@@ -1961,6 +1971,12 @@
         if (n && s.name) n.textContent = s.name;
         if (r && s.role) r.textContent = s.role;
         if (a && s.name) a.textContent = s.name.charAt(0).toUpperCase();
+
+        // Show Admin Panel link if role is admin
+        if (s.role === 'admin') {
+          const ab = document.getElementById('btn-admin-portal');
+          if (ab) ab.style.display = 'inline-flex';
+        }
       } catch (_) { }
     })();
 
