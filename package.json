@@ -1,0 +1,10 @@
+{
+  "name": "safe_route_root",
+  "version": "1.0.0",
+  "description": "SafeRoute workspace root",
+  "scripts": {
+    "dev:backend": "cd backend && npm run dev",
+    "dev:frontend": "cd frontend && npm run dev",
+    "dev": "npx -y concurrently \"npm:dev:backend\" \"npm:dev:frontend\""
+  }
+}

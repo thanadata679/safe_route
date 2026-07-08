@@ -166,6 +166,11 @@ app.delete('/api/accident-zone/:id', async (req, res) => {
       .select();
 
     if (error) throw error;
+
+    if (!data || data.length === 0) {
+      return res.status(404).json({ error: "No changes made. Database RLS policies may be blocking DELETE, or the ID does not exist." });
+    }
+
     res.json({ message: "Accident zone deleted successfully", data });
   } catch (error) {
     console.error("Database delete error:", error);
@@ -195,6 +200,11 @@ app.put('/api/accident-zone/:id', async (req, res) => {
       .select();
 
     if (error) throw error;
+
+    if (!data || data.length === 0) {
+      return res.status(404).json({ error: "No changes made. Database RLS policies may be blocking UPDATE, or the ID does not exist." });
+    }
+
     res.json({ message: "Accident zone updated successfully", data });
   } catch (error) {
     console.error("Database update error:", error);

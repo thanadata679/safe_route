@@ -608,6 +608,7 @@
             <tr>
               <th>Place Name</th>
               <th>Location details</th>
+              <th>Coordinates</th>
               <th>Danger Level</th>
               <th>Speed Limit</th>
               <th>Actions</th>
@@ -674,11 +675,11 @@
             </div>
             <div class="form-group">
               <label class="form-label" for="edit-lat">Latitude</label>
-              <input type="number" class="form-input" id="edit-lat" required step="any" readonly />
+              <input type="number" class="form-input" id="edit-lat" required step="any" />
             </div>
-            <div class="form-group" style="display:none;">
+            <div class="form-group">
               <label class="form-label" for="edit-lng">Longitude</label>
-              <input type="number" class="form-input" id="edit-lng" required step="any" readonly />
+              <input type="number" class="form-input" id="edit-lng" required step="any" />
             </div>
           </div>
         </div>
@@ -811,7 +812,7 @@
       if (!tbody) return;
 
       if (allZones.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--text-muted);padding:2rem;">No reported zones available.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--text-muted);padding:2rem;">No reported zones available.</td></tr>';
         return;
       }
 
@@ -819,6 +820,7 @@
         return `<tr class="clickable-row" onclick="focusOnZone('${z.id}')">
                   <td style="font-weight:600;color:#fff;">${z.name}</td>
                   <td style="color:var(--text-muted);">${z.district}, ${z.state} (${z.pincode})</td>
+                  <td style="color:var(--accent-blue);font-family:monospace;font-weight:500;">${parseFloat(z.latitude).toFixed(5)}, ${parseFloat(z.longitude).toFixed(5)}</td>
                   <td><span class="badge ${z.danger_level}">${z.danger_level}</span></td>
                   <td style="font-weight:600;">${z.speed_limit} km/h</td>
                   <td onclick="event.stopPropagation()">
@@ -888,7 +890,10 @@
           method: 'DELETE'
         });
 
-        if (!res.ok) throw new Error('API delete call failed');
+        if (!res.ok) {
+          const errData = await res.json().catch(() => ({}));
+          throw new Error(errData.error || 'API delete call failed');
+        }
         showToast('Accident Prone Zone deleted successfully.', 'success');
         fetchAndRenderZones();
       } catch (err) {
@@ -952,7 +957,10 @@
           })
         });
 
-        if (!res.ok) throw new Error('API update call failed');
+        if (!res.ok) {
+          const errData = await res.json().catch(() => ({}));
+          throw new Error(errData.error || 'API update call failed');
+        }
 
         showToast('Accident Prone Zone details updated successfully!', 'success');
         closeEditModal();
