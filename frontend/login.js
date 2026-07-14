@@ -28,6 +28,10 @@ const PW_MIN_LENGTH = 6;
 const DEMO_USER = { mobile: '9876543210', password: 'User@1', name: 'Demo User' };
 const DEMO_ADMIN = { mobile: '9000000000', password: 'Admin@1', key: 'APZ-ADMIN-2024', name: 'Admin' };
 
+const API_BASE_URL = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') && window.location.port === '3001'
+  ? 'http://localhost:3000'
+  : '';
+
 /* ═══════════════════════════════════════════════════
    STORAGE HELPERS
 ═══════════════════════════════════════════════════ */
@@ -286,7 +290,7 @@ async function handleUserLogin(e) {
   setButtonLoading('user-login-btn', true);
 
   try {
-    const res = await fetch('http://localhost:3000/api/auth/login', {
+    const res = await fetch(`${API_BASE_URL}/api/auth/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ mobile, password: pw, role: 'user' })
@@ -358,7 +362,7 @@ async function handleAdminLogin(e) {
   setButtonLoading('admin-login-btn', true);
 
   try {
-    const res = await fetch('http://localhost:3000/api/auth/login', {
+    const res = await fetch(`${API_BASE_URL}/api/auth/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ mobile, password: pw, role: 'admin' })
@@ -460,7 +464,7 @@ async function handleRegister(e) {
   setButtonLoading('reg-btn', true);
 
   try {
-    const res = await fetch('http://localhost:3000/api/auth/register', {
+    const res = await fetch(`${API_BASE_URL}/api/auth/register`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ name, mobile, email, password: pw, role: 'user' })
@@ -678,7 +682,7 @@ document.addEventListener('DOMContentLoaded', () => {
       console.info(`Migrating ${users.length} user account(s) to backend Supabase database...`);
       for (let u of users) {
         try {
-          await fetch('http://localhost:3000/api/auth/register', {
+          await fetch(`${API_BASE_URL}/api/auth/register`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
